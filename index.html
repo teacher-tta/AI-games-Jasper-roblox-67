@@ -1,0 +1,6793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mini Block Shooter</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
+}
+
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    color:white;
+    font-size:16px;
+    white-space:pre;
+    text-shadow:2px 2px 4px black;
+}
+
+#crosshair{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:white;
+    font-size:24px;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:50%;
+    text-align:center;
+    color:red;
+    font-size:40px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+<div id="ui"></div>
+<div id="crosshair">+</div>
+<div id="message"></div>
+
+<script type="module">
+
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const light=new THREE.DirectionalLight(0xffffff,1);
+light.position.set(5,10,5);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff,0.5));
+
+// ground
+
+const cubeGeo=new THREE.BoxGeometry();
+
+for(let x=-10;x<=10;x++){
+
+    for(let z=-10;z<=10;z++){
+
+        const cube=new THREE.Mesh(
+            cubeGeo,
+            new THREE.MeshLambertMaterial({color:0x33aa33})
+        );
+
+        cube.position.set(x,-1,z);
+
+        scene.add(cube);
+
+    }
+
+}
+
+camera.position.set(0,2,5);
+
+let health=100;
+
+const ui=document.getElementById("ui");
+const message=document.getElementById("message");
+
+const enemies=[];
+
+function enemy(x,z){
+
+    const e=new THREE.Mesh(
+        new THREE.BoxGeometry(1,2,1),
+        new THREE.MeshLambertMaterial({color:"red"})
+    );
+
+    e.position.set(x,0,z);
+
+    scene.add(e);
+
+    enemies.push(e);
+
+}
+
+enemy(5,-5);
+enemy(-5,-8);
+enemy(0,-12);
+
+const keys={};
+
+document.addEventListener("keydown",e=>{
+
+    keys[e.key.toLowerCase()]=true;
+
+    if(e.key=="r"||e.key=="R"){
+
+        health=100;
+        camera.position.set(0,2,5);
+        message.innerHTML="";
+
+    }
+
+    if(e.key=="q"||e.key=="Q"){
+
+        window.close();
+
+        location.reload();
+
+    }
+
+});
+
+document.addEventListener("keyup",e=>{
+
+    keys[e.key.toLowerCase()]=false;
+
+});
+
+document.body.onclick=()=>{
+
+    document.body.requestPointerLock();
+
+    shoot();
+
+};
+
+function shoot(){
+
+    const ray=new THREE.Raycaster();
+
+    ray.setFromCamera(new THREE.Vector2(0,0),camera);
+
+    const hit=ray.intersectObjects(enemies);
+
+    if(hit.length){
+
+        scene.remove(hit[0].object);
+
+        enemies.splice(enemies.indexOf(hit[0].object),1);
+
+    }
+
+}
+
+let yaw=0;
+let pitch=0;
+
+document.addEventListener("mousemove",e=>{
+
+if(document.pointerLockElement===document.body){
+
+yaw-=e.movementX*0.002;
+pitch-=e.movementY*0.002;
+
+pitch=Math.max(-1.5,Math.min(1.5,pitch));
+
+camera.rotation.order="YXZ";
+camera.rotation.y=yaw;
+camera.rotation.x=pitch;
+
+}
+
+});
+
+function animate(){
+
+requestAnimationFrame(animate);
+
+const speed=0.08;
+
+const forward=new THREE.Vector3();
+
+camera.getWorldDirection(forward);
+
+forward.y=0;
+forward.normalize();
+
+const right=new THREE.Vector3();
+
+right.crossVectors(forward,new THREE.Vector3(0,1,0));
+
+if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
+if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
+if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
+if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
+
+enemies.forEach(e=>{
+
+const dir=new THREE.Vector3();
+
+dir.subVectors(camera.position,e.position);
+
+dir.y=0;
+
+if(dir.length()>1){
+
+dir.normalize();
+
+e.position.add(dir.multiplyScalar(0.02));
+
+}
+
+if(e.position.distanceTo(camera.position)<1.5){
+
+health-=0.2;
+
+}
+
+});
+
+if(health<=0){
+
+message.innerHTML="GAME OVER<br>Press R";
+
+}
+
+if(enemies.length==0){
+
+message.innerHTML="YOU WIN!";
+
+}
+
+ui.innerHTML=
+`Health: ${Math.floor(health)}
+
+Controls
+WASD - Move
+Mouse - Look
+Click - Shoot
+R - Respawn
+Q - Quit
+
+Enemies Left: ${enemies.length}`;
+
+renderer.render(scene,camera);
+
+}
+
+animate();
+
+addEventListener("resize",()=>{
+
+camera.aspect=innerWidth/innerHeight;
+camera.updateProjectionMatrix();
+
+renderer.setSize(innerWidth,innerHeight);
+
+});
+
+</script>
+
+</body>
+</html>vv
