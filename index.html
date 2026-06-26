@@ -2,283 +2,644 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Mini Block Shooter</title>
-
+<title>Minecraft Clone</title>
 <style>
-body{
-    margin:0;
-    overflow:hidden;
-    background:black;
-    font-family:Arial;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #000; overflow: hidden; font-family: Arial, sans-serif; }
+canvas { display: block; }
+
+#ui {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  user-select: none;
 }
 
-#ui{
-    position:absolute;
-    top:10px;
-    left:10px;
-    color:white;
-    font-size:16px;
-    white-space:pre;
-    text-shadow:2px 2px 4px black;
+#crosshair {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 28px;
+  text-shadow: 1px 1px 2px black, -1px -1px 2px black;
+  line-height: 1;
 }
 
-#crosshair{
-    position:absolute;
-    left:50%;
-    top:50%;
-    transform:translate(-50%,-50%);
-    color:white;
-    font-size:24px;
+#hotbar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
 }
 
-#message{
-    position:absolute;
-    width:100%;
-    top:50%;
-    text-align:center;
-    color:red;
-    font-size:40px;
-    font-weight:bold;
+.slot {
+  width: 56px;
+  height: 56px;
+  border: 2px solid #555;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: 4px;
+  transition: border-color 0.1s;
 }
+
+.slot.active {
+  border-color: #fff;
+  border-width: 3px;
+  background: rgba(255,255,255,0.1);
+}
+
+.slot-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.slot-label {
+  font-size: 9px;
+  color: #ccc;
+  margin-top: 2px;
+}
+
+.slot-num {
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  font-size: 10px;
+  color: #aaa;
+}
+
+#health {
+  position: absolute;
+  bottom: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+}
+
+.heart { font-size: 18px; }
+
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-size: 13px;
+  text-shadow: 1px 1px 2px black;
+  line-height: 1.8;
+  background: rgba(0,0,0,0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+#msg {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  text-shadow: 2px 2px 6px black;
+  text-align: center;
+  display: none;
+  background: rgba(0,0,0,0.5);
+  padding: 24px 40px;
+  border-radius: 12px;
+}
+
+#start {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 36px 48px;
+  border-radius: 14px;
+  text-align: center;
+  border: 1px solid #555;
+  min-width: 340px;
+}
+
+#start h1 { font-size: 28px; margin-bottom: 6px; }
+#start .sub { color: #88cc88; font-size: 14px; margin-bottom: 20px; }
+
+#controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.ctrl-row { font-size: 13px; color: #ccc; }
+.ctrl-row b { color: white; }
+
+#startbtn {
+  padding: 12px 36px;
+  background: #4a7;
+  border: none;
+  color: white;
+  font-size: 17px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: background 0.15s;
+}
+
+#startbtn:hover { background: #5b8; }
 </style>
-
 </head>
 <body>
 
-<div id="ui"></div>
-<div id="crosshair">+</div>
-<div id="message"></div>
+<!-- HUD overlay -->
+<div id="ui">
+  <div id="crosshair">+</div>
+  <div id="hotbar"></div>
+  <div id="health"></div>
+  <div id="hud"></div>
+  <div id="msg"></div>
+</div>
+
+<!-- Start screen -->
+<div id="start">
+  <h1>🟩 Minecraft Clone</h1>
+  <p class="sub">A browser voxel world built with Three.js</p>
+  <div id="controls-grid">
+    <div class="ctrl-row"><b>WASD</b> — Move</div>
+    <div class="ctrl-row"><b>Space</b> — Jump</div>
+    <div class="ctrl-row"><b>Left Click</b> — Break block</div>
+    <div class="ctrl-row"><b>Right Click</b> — Place block</div>
+    <div class="ctrl-row"><b>Scroll</b> — Change block</div>
+    <div class="ctrl-row"><b>1–8</b> — Select slot</div>
+    <div class="ctrl-row"><b>Shift</b> — Sprint</div>
+    <div class="ctrl-row"><b>F</b> — Fly mode</div>
+  </div>
+  <button id="startbtn">Click to Play</button>
+</div>
 
 <script type="module">
-
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x87ceeb);
+// ─── DOM refs ───────────────────────────────────────────────────────────────
+const startEl  = document.getElementById("start");
+const startBtn = document.getElementById("startbtn");
+const hotbarEl = document.getElementById("hotbar");
+const healthEl = document.getElementById("health");
+const hudEl    = document.getElementById("hud");
+const msgEl    = document.getElementById("msg");
 
-const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
+// ─── Block definitions ──────────────────────────────────────────────────────
+const BLOCK_TYPES = [
+  { name: "Grass",  color: 0x5aa832 },
+  { name: "Dirt",   color: 0x8b5a2b },
+  { name: "Stone",  color: 0x888888 },
+  { name: "Wood",   color: 0x8b6914 },
+  { name: "Leaves", color: 0x228b22 },
+  { name: "Sand",   color: 0xf4d03f },
+  { name: "Glass",  color: 0xaaddff, opacity: 0.45 },
+  { name: "Brick",  color: 0xb85c38 },
+];
 
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight);
-document.body.appendChild(renderer.domElement);
+// ─── Inventory / hotbar ─────────────────────────────────────────────────────
+let selectedSlot = 0;
+const inventory  = [0, 1, 2, 3, 4, 5, 6, 7]; // block type indices
 
-const light=new THREE.DirectionalLight(0xffffff,1);
-light.position.set(5,10,5);
-scene.add(light);
+function buildHotbar() {
+  hotbarEl.innerHTML = "";
+  inventory.forEach((bi, i) => {
+    const bt = BLOCK_TYPES[bi];
+    const wrap = document.createElement("div");
+    wrap.className = "slot" + (i === selectedSlot ? " active" : "");
+    wrap.style.position = "relative";
 
-scene.add(new THREE.AmbientLight(0xffffff,0.5));
+    const num = document.createElement("span");
+    num.className = "slot-num";
+    num.textContent = i + 1;
 
-// ground
+    const icon = document.createElement("div");
+    icon.className = "slot-icon";
+    icon.style.background = "#" + bt.color.toString(16).padStart(6, "0");
 
-const cubeGeo=new THREE.BoxGeometry();
+    const label = document.createElement("div");
+    label.className = "slot-label";
+    label.textContent = bt.name;
 
-for(let x=-10;x<=10;x++){
-
-    for(let z=-10;z<=10;z++){
-
-        const cube=new THREE.Mesh(
-            cubeGeo,
-            new THREE.MeshLambertMaterial({color:0x33aa33})
-        );
-
-        cube.position.set(x,-1,z);
-
-        scene.add(cube);
-
-    }
-
+    wrap.appendChild(num);
+    wrap.appendChild(icon);
+    wrap.appendChild(label);
+    hotbarEl.appendChild(wrap);
+  });
 }
 
-camera.position.set(0,2,5);
-
-let health=100;
-
-const ui=document.getElementById("ui");
-const message=document.getElementById("message");
-
-const enemies=[];
-
-function enemy(x,z){
-
-    const e=new THREE.Mesh(
-        new THREE.BoxGeometry(1,2,1),
-        new THREE.MeshLambertMaterial({color:"red"})
-    );
-
-    e.position.set(x,0,z);
-
-    scene.add(e);
-
-    enemies.push(e);
-
+function buildHealth(hp) {
+  healthEl.innerHTML = "";
+  for (let i = 0; i < 10; i++) {
+    const h = document.createElement("span");
+    h.className = "heart";
+    h.textContent = i < hp / 10 ? "❤️" : "🖤";
+    healthEl.appendChild(h);
+  }
 }
 
-enemy(5,-5);
-enemy(-5,-8);
-enemy(0,-12);
+buildHotbar();
+buildHealth(100);
 
-const keys={};
+// ─── Three.js scene ─────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.fog   = new THREE.Fog(0x87ceeb, 25, 70);
 
-document.addEventListener("keydown",e=>{
+const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 200);
 
-    keys[e.key.toLowerCase()]=true;
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+document.body.insertBefore(renderer.domElement, document.getElementById("ui"));
 
-    if(e.key=="r"||e.key=="R"){
+// ─── Lighting ───────────────────────────────────────────────────────────────
+const sun = new THREE.DirectionalLight(0xfff5cc, 1.3);
+sun.position.set(50, 80, 50);
+sun.castShadow = true;
+sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far  = 200;
+sun.shadow.camera.left = sun.shadow.camera.bottom = -60;
+sun.shadow.camera.right = sun.shadow.camera.top   =  60;
+scene.add(sun);
 
-        health=100;
-        camera.position.set(0,2,5);
-        message.innerHTML="";
+const ambient = new THREE.AmbientLight(0x6688cc, 0.5);
+scene.add(ambient);
 
+const hemi = new THREE.HemisphereLight(0x87ceeb, 0x4a7020, 0.6);
+scene.add(hemi);
+
+// ─── Block world ─────────────────────────────────────────────────────────────
+const blocks  = new Map();   // "x,y,z" -> blockTypeIndex
+const meshMap = new Map();   // "x,y,z" -> THREE.Mesh
+
+const blockGeo = new THREE.BoxGeometry(1, 1, 1);
+
+function bkey(x, y, z) { return `${x},${y},${z}`; }
+
+function makeMaterial(bi) {
+  const bt = BLOCK_TYPES[bi];
+  return new THREE.MeshLambertMaterial({
+    color:       bt.color,
+    transparent: bt.opacity !== undefined,
+    opacity:     bt.opacity ?? 1,
+  });
+}
+
+function addBlock(x, y, z, bi) {
+  const k = bkey(x, y, z);
+  if (blocks.has(k)) return;
+  blocks.set(k, bi);
+  const mesh = new THREE.Mesh(blockGeo, makeMaterial(bi));
+  mesh.position.set(x, y, z);
+  mesh.castShadow    = true;
+  mesh.receiveShadow = true;
+  mesh.userData      = { bx: x, by: y, bz: z, bi };
+  scene.add(mesh);
+  meshMap.set(k, mesh);
+}
+
+function removeBlock(x, y, z) {
+  const k = bkey(x, y, z);
+  if (!blocks.has(k)) return;
+  blocks.delete(k);
+  const mesh = meshMap.get(k);
+  if (mesh) scene.remove(mesh);
+  meshMap.delete(k);
+}
+
+function hasBlock(x, y, z) {
+  return blocks.has(bkey(Math.round(x), Math.round(y), Math.round(z)));
+}
+
+// ─── Terrain generation ─────────────────────────────────────────────────────
+function noise(x, z) {
+  return (
+    Math.sin(x * 0.28) * Math.cos(z * 0.22) * 2.5 +
+    Math.sin(x * 0.11 + z * 0.14) * 3.5 +
+    Math.cos(x * 0.05 - z * 0.07) * 1.5
+  );
+}
+
+const W = 32, D = 32;
+
+for (let x = -W; x <= W; x++) {
+  for (let z = -D; z <= D; z++) {
+    const h = Math.floor(noise(x, z));
+    const edge = Math.abs(x) > 26 || Math.abs(z) > 26;
+
+    // Bedrock
+    addBlock(x, -4, z, 2);
+    // Stone layers
+    for (let y = -3; y < h - 1; y++) addBlock(x, y, z, 2);
+    // Dirt under surface
+    addBlock(x, h - 1, z, 1);
+    // Surface
+    if (edge) {
+      addBlock(x, h, z, 5); // sand at edges
+    } else {
+      addBlock(x, h, z, 0); // grass
     }
 
-    if(e.key=="q"||e.key=="Q"){
+    // Trees (not near edges, random)
+    if (!edge && Math.random() < 0.018 && Math.abs(x) < 26 && Math.abs(z) < 26) {
+      const th = Math.floor(4 + Math.random() * 3);
+      for (let t = 1; t <= th; t++) addBlock(x, h + t, z, 3); // trunk
+      // Leaves sphere
+      for (let lx = -2; lx <= 2; lx++) {
+        for (let lz = -2; lz <= 2; lz++) {
+          for (let ly = -1; ly <= 2; ly++) {
+            if (Math.abs(lx) + Math.abs(lz) + Math.abs(ly) < 4) {
+              addBlock(x + lx, h + th + ly, z + lz, 4);
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
-        window.close();
+// ─── Player state ────────────────────────────────────────────────────────────
+camera.position.set(0, 6, 10);
+let velY      = 0;
+let onGround  = false;
+let flyMode   = false;
+let velFly    = 0;
+let health    = 100;
+let yaw       = 0;
+let pitch     = 0;
+let started   = false;
 
-        location.reload();
+const keys = {};
 
+document.addEventListener("keydown", e => {
+  keys[e.code] = true;
+
+  if (!started) return;
+
+  // Jump
+  if (e.code === "Space" && !flyMode) {
+    if (onGround) { velY = 0.13; onGround = false; }
+  }
+  if (e.code === "Space" && flyMode) velFly = 0.12;
+
+  // Fly toggle
+  if (e.key === "f" || e.key === "F") {
+    flyMode = !flyMode;
+    velY = 0;
+  }
+
+  // Hotbar slots 1–8
+  if (e.key >= "1" && e.key <= "8") {
+    selectedSlot = parseInt(e.key) - 1;
+    buildHotbar();
+  }
+});
+
+document.addEventListener("keyup", e => {
+  keys[e.code] = false;
+  if (e.code === "Space" && flyMode) velFly = 0;
+});
+
+document.addEventListener("wheel", e => {
+  if (!started) return;
+  selectedSlot = (selectedSlot + Math.sign(e.deltaY) + inventory.length) % inventory.length;
+  buildHotbar();
+}, { passive: true });
+
+document.addEventListener("mousemove", e => {
+  if (document.pointerLockElement !== renderer.domElement) return;
+  yaw   -= e.movementX * 0.002;
+  pitch  = Math.max(-1.45, Math.min(1.45, pitch - e.movementY * 0.002));
+  camera.rotation.order = "YXZ";
+  camera.rotation.y     = yaw;
+  camera.rotation.x     = pitch;
+});
+
+// ─── Block raycasting ────────────────────────────────────────────────────────
+const ray = new THREE.Raycaster(undefined, undefined, 0, 6);
+
+function getTargetBlock() {
+  ray.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const hits = ray.intersectObjects([...meshMap.values()]);
+  return hits.length ? hits[0] : null;
+}
+
+function getPlacementPos(hit) {
+  const n  = hit.face.normal.clone();
+  const ud = hit.object.userData;
+  return {
+    x: ud.bx + Math.round(n.x),
+    y: ud.by + Math.round(n.y),
+    z: ud.bz + Math.round(n.z),
+  };
+}
+
+// ─── Block highlight outline ─────────────────────────────────────────────────
+const hlGeo  = new THREE.BoxGeometry(1.02, 1.02, 1.02);
+const hlMat  = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, opacity: 0.5, transparent: true });
+const highlight = new THREE.Mesh(hlGeo, hlMat);
+highlight.visible = false;
+scene.add(highlight);
+
+// ─── Mouse click: break / place ──────────────────────────────────────────────
+let lastBreak = 0, lastPlace = 0;
+
+renderer.domElement.addEventListener("mousedown", e => {
+  if (!started) return;
+  const now = Date.now();
+  const hit = getTargetBlock();
+
+  if (e.button === 0 && hit && now - lastBreak > 200) {
+    lastBreak = now;
+    const ud  = hit.object.userData;
+    removeBlock(ud.bx, ud.by, ud.bz);
+    highlight.visible = false;
+  }
+
+  if (e.button === 2 && hit && now - lastPlace > 250) {
+    lastPlace = now;
+    const p   = getPlacementPos(hit);
+    // Prevent placing inside the player body
+    const dx  = Math.abs(p.x - Math.round(camera.position.x));
+    const dy  = Math.abs(p.y - Math.round(camera.position.y - 0.9));
+    const dz  = Math.abs(p.z - Math.round(camera.position.z));
+    if (dx + dy + dz > 0) {
+      addBlock(p.x, p.y, p.z, inventory[selectedSlot]);
+    }
+  }
+});
+
+renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+
+// ─── Day / night cycle ───────────────────────────────────────────────────────
+let worldTime = 0; // 0 → 2π = one full day
+
+// ─── Main loop ───────────────────────────────────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+  if (!started) return;
+
+  // ── Movement direction vectors
+  const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const right   = new THREE.Vector3( Math.cos(yaw), 0, -Math.sin(yaw));
+  const speed   = keys["ShiftLeft"] ? 0.16 : 0.09;
+
+  const move = new THREE.Vector3();
+  if (keys["KeyW"]) move.add(forward);
+  if (keys["KeyS"]) move.sub(forward);
+  if (keys["KeyA"]) move.sub(right);
+  if (keys["KeyD"]) move.add(right);
+  if (move.length() > 0) move.normalize().multiplyScalar(speed);
+
+  // ── Fly mode vertical
+  if (flyMode) {
+    if (keys["Space"])        camera.position.y += 0.12;
+    if (keys["ShiftLeft"])    camera.position.y -= 0.12;
+    camera.position.add(move);
+  } else {
+    // ── Horizontal collision (AABB on foot-level)
+    const nx = camera.position.x + move.x;
+    const nz = camera.position.z + move.z;
+    const fy = Math.round(camera.position.y - 1.7);
+    const cy = Math.round(camera.position.y - 0.9);
+
+    if (
+      !hasBlock(nx + 0.3, fy, camera.position.z) &&
+      !hasBlock(nx - 0.3, fy, camera.position.z) &&
+      !hasBlock(nx + 0.3, cy, camera.position.z) &&
+      !hasBlock(nx - 0.3, cy, camera.position.z)
+    ) camera.position.x = nx;
+
+    if (
+      !hasBlock(camera.position.x, fy, nz + 0.3) &&
+      !hasBlock(camera.position.x, fy, nz - 0.3) &&
+      !hasBlock(camera.position.x, cy, nz + 0.3) &&
+      !hasBlock(camera.position.x, cy, nz - 0.3)
+    ) camera.position.z = nz;
+
+    // ── Gravity
+    velY -= 0.005;
+    camera.position.y += velY;
+
+    const footY = camera.position.y - 1.75;
+    const gx    = Math.round(camera.position.x);
+    const gz    = Math.round(camera.position.z);
+    onGround    = false;
+
+    for (let bx = gx - 1; bx <= gx + 1; bx++) {
+      for (let bz = gz - 1; bz <= gz + 1; bz++) {
+        const by = Math.round(footY);
+        if (
+          blocks.has(bkey(bx, by, bz)) &&
+          Math.abs(bx - camera.position.x) < 0.75 &&
+          Math.abs(bz - camera.position.z) < 0.75
+        ) {
+          if (velY < 0) {
+            camera.position.y = by + 1 + 1.75;
+            velY = 0;
+            onGround = true;
+          }
+        }
+      }
     }
 
-});
+    // ── Ceiling check
+    const headY = Math.round(camera.position.y + 0.25);
+    if (blocks.has(bkey(Math.round(camera.position.x), headY, Math.round(camera.position.z)))) {
+      velY = Math.min(velY, -0.01);
+    }
 
-document.addEventListener("keyup",e=>{
+    // ── Void respawn
+    if (camera.position.y < -20) {
+      camera.position.set(0, 10, 0);
+      velY = 0;
+    }
+  }
 
-    keys[e.key.toLowerCase()]=false;
+  // ── Day / night
+  worldTime += 0.0003;
+  const dayT  = Math.sin(worldTime);
+  const skyR  = Math.max(0, dayT * 0.53);
+  const skyG  = Math.max(0.05, dayT * 0.81 + 0.05);
+  const skyB  = Math.max(0.15, dayT * 0.55 + 0.45);
+  scene.background = new THREE.Color(skyR, skyG, skyB);
+  scene.fog.color.setRGB(skyR, skyG, skyB);
+  sun.intensity     = Math.max(0.05, dayT * 1.3);
+  ambient.intensity = Math.max(0.25, dayT * 0.5);
 
-});
+  // Move sun in arc
+  const sunAngle = worldTime * 0.5;
+  sun.position.set(Math.cos(sunAngle) * 80, Math.sin(sunAngle) * 80, 40);
 
-document.body.onclick=()=>{
+  // ── Block highlight
+  const hit = getTargetBlock();
+  if (hit) {
+    highlight.visible = true;
+    highlight.position.copy(hit.object.position);
+  } else {
+    highlight.visible = false;
+  }
 
-    document.body.requestPointerLock();
+  // ── HUD
+  const timeOfDay = ((worldTime % (Math.PI * 2)) / (Math.PI * 2));
+  const hrs       = Math.floor(timeOfDay * 24);
+  const mins      = Math.floor((timeOfDay * 24 % 1) * 60);
+  const hh        = hrs.toString().padStart(2, "0");
+  const mm        = mins.toString().padStart(2, "0");
+  const phase     = hrs >= 6 && hrs < 20 ? "☀️ Day" : "🌙 Night";
 
-    shoot();
+  hudEl.innerHTML =
+    `XYZ: ${Math.round(camera.position.x)}, ${Math.round(camera.position.y)}, ${Math.round(camera.position.z)}<br>` +
+    `Block: ${BLOCK_TYPES[inventory[selectedSlot]].name}<br>` +
+    `Time: ${hh}:${mm} ${phase}<br>` +
+    `Mode: ${flyMode ? "✈️ Fly (F to toggle)" : "🚶 Walk (F to fly)"}`;
 
+  renderer.render(scene, camera);
+}
+
+// ─── Start / pause ───────────────────────────────────────────────────────────
+startBtn.onclick = () => {
+  startEl.style.display = "none";
+  renderer.domElement.requestPointerLock();
+  started = true;
+  animate();
 };
 
-function shoot(){
-
-    const ray=new THREE.Raycaster();
-
-    ray.setFromCamera(new THREE.Vector2(0,0),camera);
-
-    const hit=ray.intersectObjects(enemies);
-
-    if(hit.length){
-
-        scene.remove(hit[0].object);
-
-        enemies.splice(enemies.indexOf(hit[0].object),1);
-
-    }
-
-}
-
-let yaw=0;
-let pitch=0;
-
-document.addEventListener("mousemove",e=>{
-
-if(document.pointerLockElement===document.body){
-
-yaw-=e.movementX*0.002;
-pitch-=e.movementY*0.002;
-
-pitch=Math.max(-1.5,Math.min(1.5,pitch));
-
-camera.rotation.order="YXZ";
-camera.rotation.y=yaw;
-camera.rotation.x=pitch;
-
-}
-
+document.addEventListener("pointerlockchange", () => {
+  if (!started) return;
+  if (!document.pointerLockElement) {
+    msgEl.style.display = "block";
+    msgEl.innerHTML = "Paused<br><small style='font-size:15px;font-weight:normal'>Click to resume</small>";
+  } else {
+    msgEl.style.display = "none";
+  }
 });
 
-function animate(){
-
-requestAnimationFrame(animate);
-
-const speed=0.08;
-
-const forward=new THREE.Vector3();
-
-camera.getWorldDirection(forward);
-
-forward.y=0;
-forward.normalize();
-
-const right=new THREE.Vector3();
-
-right.crossVectors(forward,new THREE.Vector3(0,1,0));
-
-if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
-if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
-if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
-if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
-
-enemies.forEach(e=>{
-
-const dir=new THREE.Vector3();
-
-dir.subVectors(camera.position,e.position);
-
-dir.y=0;
-
-if(dir.length()>1){
-
-dir.normalize();
-
-e.position.add(dir.multiplyScalar(0.02));
-
-}
-
-if(e.position.distanceTo(camera.position)<1.5){
-
-health-=0.2;
-
-}
-
+renderer.domElement.addEventListener("click", () => {
+  if (started && document.pointerLockElement !== renderer.domElement) {
+    renderer.domElement.requestPointerLock();
+  }
 });
 
-if(health<=0){
-
-message.innerHTML="GAME OVER<br>Press R";
-
-}
-
-if(enemies.length==0){
-
-message.innerHTML="YOU WIN!";
-
-}
-
-ui.innerHTML=
-`Health: ${Math.floor(health)}
-
-Controls
-WASD - Move
-Mouse - Look
-Click - Shoot
-R - Respawn
-Q - Quit
-
-Enemies Left: ${enemies.length}`;
-
-renderer.render(scene,camera);
-
-}
-
-animate();
-
-addEventListener("resize",()=>{
-
-camera.aspect=innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-
-renderer.setSize(innerWidth,innerHeight);
-
+// ─── Resize ──────────────────────────────────────────────────────────────────
+window.addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
-
 </script>
-
 </body>
 </html>
