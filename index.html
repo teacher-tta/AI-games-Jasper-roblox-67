@@ -145,32 +145,28 @@ iMeshes.forEach(m=>{ m.count=0; scene.add(m); });
 const _mat = new THREE.Matrix4();
 
 // ── Block data ───────────────────────────────────────────────────────────────
-// blocks Map: "x,y,z" -> { bi, iIdx }   (bi=block type, iIdx=instance index in that type's mesh)
-const blocks  = new Map();
-// count of placed instances per type
-const iCount  = new Int32Array(NUM_TYPES);
-// free-list per type (recycled indices when blocks are removed)
-const freeLists = Array.from({length:NUM_TYPES},()=>[]);
+// Forward:  bkey -> { bi, idx }
+// Reverse:  rkey(bi,idx) -> bkey   (O(1) swap in removeBlock, always correct)
+const blocks = new Map();
+const rMap   = new Map();
+const iCount = new Int32Array(NUM_TYPES);
 
 function bkey(x,y,z){ return `${x|0},${y|0},${z|0}`; }
+function rkey(bi,idx){ return `${bi}:${idx}`; }
 
 function addBlock(x,y,z,bi){
   x=x|0; y=y|0; z=z|0;
   const k=bkey(x,y,z);
   if(blocks.has(k)) return;
-  const mesh = iMeshes[bi];
-  let idx;
-  if(freeLists[bi].length){
-    idx = freeLists[bi].pop();
-  } else {
-    if(iCount[bi]>=MAX_INST) return;
-    idx = iCount[bi]++;
-    mesh.count = iCount[bi];
-  }
+  const mesh=iMeshes[bi];
+  if(iCount[bi]>=MAX_INST) return;
+  const idx=iCount[bi]++;
+  mesh.count=iCount[bi];
   _mat.makeTranslation(x,y,z);
-  mesh.setMatrixAt(idx, _mat);
-  mesh.instanceMatrix.needsUpdate = true;
-  blocks.set(k, {bi, idx});
+  mesh.setMatrixAt(idx,_mat);
+  mesh.instanceMatrix.needsUpdate=true;
+  blocks.set(k,{bi,idx});
+  rMap.set(rkey(bi,idx),k);
 }
 
 function removeBlock(x,y,z){
@@ -178,23 +174,25 @@ function removeBlock(x,y,z){
   const k=bkey(x,y,z);
   const info=blocks.get(k);
   if(!info) return;
-  blocks.delete(k);
-  // Move last active instance into this slot to keep the array packed
   const {bi,idx}=info;
   const mesh=iMeshes[bi];
   const last=iCount[bi]-1;
+
+  blocks.delete(k);
+  rMap.delete(rkey(bi,idx));
+
+  // Swap the last active instance into the freed slot to keep array packed
   if(idx!==last && last>=0){
-    // find which block owns slot `last`
-    let foundKey=null;
-    for(const [kk,vv] of blocks){
-      if(vv.bi===bi && vv.idx===last){ foundKey=kk; break; }
-    }
-    if(foundKey){
+    const lastKey=rMap.get(rkey(bi,last));
+    if(lastKey){
       mesh.getMatrixAt(last,_mat);
       mesh.setMatrixAt(idx,_mat);
-      blocks.get(foundKey).idx=idx;
+      blocks.get(lastKey).idx=idx;
+      rMap.delete(rkey(bi,last));
+      rMap.set(rkey(bi,idx),lastKey);
     }
   }
+
   iCount[bi]=Math.max(0,last);
   mesh.count=iCount[bi];
   mesh.instanceMatrix.needsUpdate=true;
