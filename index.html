@@ -1,476 +1,1544 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Minecraft Clone</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #000; overflow: hidden; font-family: Arial, sans-serif; }
-canvas { display: block; }
-#ui { position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;user-select:none; }
-#crosshair { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:28px;text-shadow:1px 1px 2px black,-1px -1px 2px black;line-height:1; }
-#hotbar { position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px; }
-.slot { width:56px;height:56px;border:2px solid #555;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:4px;position:relative; }
-.slot.active { border-color:#fff;border-width:3px;background:rgba(255,255,255,0.1); }
-.slot-icon { width:34px;height:34px;border-radius:3px;border:1px solid rgba(255,255,255,0.2); }
-.slot-label { font-size:9px;color:#ccc;margin-top:2px; }
-.slot-num { position:absolute;top:2px;left:5px;font-size:10px;color:#aaa; }
-#health { position:absolute;bottom:84px;left:50%;transform:translateX(-50%);display:flex;gap:3px; }
-.heart { font-size:18px; }
-#hud { position:absolute;top:10px;left:10px;color:white;font-size:13px;text-shadow:1px 1px 2px black;line-height:1.8;background:rgba(0,0,0,0.3);padding:8px 12px;border-radius:6px; }
-#msg { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:white;font-size:32px;font-weight:bold;text-align:center;display:none;background:rgba(0,0,0,0.5);padding:24px 40px;border-radius:12px; }
-#start { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:white;padding:36px 48px;border-radius:14px;text-align:center;border:1px solid #555;min-width:340px; }
-#start h1 { font-size:28px;margin-bottom:6px; }
-#start .sub { color:#88cc88;font-size:14px;margin-bottom:20px; }
-#controls-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;margin-bottom:20px;text-align:left; }
-.ctrl-row { font-size:13px;color:#ccc; }
-.ctrl-row b { color:white; }
-#startbtn { padding:12px 36px;background:#4a7;border:none;color:white;font-size:17px;border-radius:8px;cursor:pointer;pointer-events:all; }
-#startbtn:hover { background:#5b8; }
-</style>
+    <meta charset="UTF-8">
+    <title>Minecraft Clone – with Animals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            user-select: none;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 28px;
+            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+            line-height: 1;
+        }
+        #hotbar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 4px;
+        }
+        .slot {
+            width: 56px;
+            height: 56px;
+            border: 2px solid #555;
+            background: rgba(0, 0, 0, 0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border-radius: 4px;
+            position: relative;
+        }
+        .slot.active {
+            border-color: #fff;
+            border-width: 3px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .slot-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 3px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .slot-label {
+            font-size: 9px;
+            color: #ccc;
+            margin-top: 2px;
+        }
+        .slot-num {
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            font-size: 10px;
+            color: #aaa;
+        }
+        #health {
+            position: absolute;
+            bottom: 84px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 3px;
+        }
+        .heart {
+            font-size: 18px;
+        }
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 13px;
+            text-shadow: 1px 1px 2px #000;
+            line-height: 1.8;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #msg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 24px 40px;
+            border-radius: 12px;
+            z-index: 20;
+            pointer-events: auto;
+        }
+        #start {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 36px 48px;
+            border-radius: 14px;
+            text-align: center;
+            border: 1px solid #555;
+            min-width: 340px;
+            z-index: 30;
+            pointer-events: auto;
+        }
+        #start h1 {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+        #start .sub {
+            color: #88cc88;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        #controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .ctrl-row {
+            font-size: 13px;
+            color: #ccc;
+        }
+        .ctrl-row b {
+            color: #fff;
+        }
+        #startbtn {
+            padding: 12px 36px;
+            background: #4a7;
+            border: none;
+            color: #fff;
+            font-size: 17px;
+            border-radius: 8px;
+            cursor: pointer;
+            pointer-events: all;
+        }
+        #startbtn:hover {
+            background: #5b8;
+        }
+
+        /* ── Trade UI (unchanged) ── */
+        #trade-ui {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 30, 0.92);
+            color: #fff;
+            padding: 28px 36px;
+            border-radius: 14px;
+            border: 2px solid #6a6a7a;
+            min-width: 360px;
+            display: none;
+            z-index: 50;
+            pointer-events: auto;
+            backdrop-filter: blur(6px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+        #trade-ui h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+            color: #c8b88a;
+        }
+        #trade-ui .subtitle {
+            font-size: 13px;
+            color: #aab;
+            margin-bottom: 18px;
+        }
+        .trade-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 8px 0 16px;
+        }
+        .trade-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: background 0.15s;
+        }
+        .trade-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .trade-item .info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .trade-item .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            flex-shrink: 0;
+        }
+        .trade-item .name {
+            font-size: 15px;
+        }
+        .trade-item .cost {
+            font-size: 13px;
+            color: #8c8;
+        }
+        .trade-item .btn-trade {
+            background: #4a7;
+            border: none;
+            color: #fff;
+            padding: 5px 16px;
+            border-radius: 5px;
+            font-size: 13px;
+            cursor: pointer;
+            pointer-events: all;
+            transition: background 0.15s;
+        }
+        .trade-item .btn-trade:hover {
+            background: #5b8;
+        }
+        .trade-item .btn-trade:active {
+            transform: scale(0.96);
+        }
+        #trade-close {
+            margin-top: 10px;
+            background: #555;
+            border: none;
+            color: #fff;
+            padding: 7px 28px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            pointer-events: all;
+            transition: background 0.15s;
+        }
+        #trade-close:hover {
+            background: #777;
+        }
+        #trade-msg {
+            font-size: 14px;
+            color: #8d8;
+            margin-top: 6px;
+            min-height: 22px;
+        }
+
+        /* ── Nametag (villagers & animals) ── */
+        .entity-tag {
+            position: absolute;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px #000, 0 0 8px #000;
+            pointer-events: none;
+            transform: translate(-50%, -100%);
+            padding: 2px 10px 6px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px 10px 4px 4px;
+            white-space: nowrap;
+            display: none;
+            z-index: 5;
+        }
+    </style>
 </head>
 <body>
-<div id="ui">
-  <div id="crosshair">+</div>
-  <div id="hotbar"></div>
-  <div id="health"></div>
-  <div id="hud"></div>
-  <div id="msg"></div>
-</div>
-<div id="start">
-  <h1>🟩 Minecraft Clone</h1>
-  <p class="sub">Optimised — single draw call per block type</p>
-  <div id="controls-grid">
-    <div class="ctrl-row"><b>WASD</b> — Move</div>
-    <div class="ctrl-row"><b>Space</b> — Jump</div>
-    <div class="ctrl-row"><b>Left Click</b> — Break block</div>
-    <div class="ctrl-row"><b>Right Click</b> — Place block</div>
-    <div class="ctrl-row"><b>Scroll / 1–8</b> — Block type</div>
-    <div class="ctrl-row"><b>Shift</b> — Sprint</div>
-    <div class="ctrl-row"><b>F</b> — Fly mode</div>
-    <div class="ctrl-row"><b>Esc</b> — Pause</div>
-  </div>
-  <button id="startbtn">Click to Play</button>
-</div>
+    <div id="ui">
+        <div id="crosshair">+</div>
+        <div id="hotbar"></div>
+        <div id="health"></div>
+        <div id="hud"></div>
+        <div id="msg"></div>
+        <div id="trade-ui">
+            <h2>🧑‍🌾 Villager</h2>
+            <div class="subtitle">Right‑click to trade</div>
+            <div class="trade-items" id="trade-items"></div>
+            <div id="trade-msg"></div>
+            <button id="trade-close">Close</button>
+        </div>
+        <div class="entity-tag" id="villager-tag">🧑‍🌾 Villager</div>
+        <!-- animal tags will be created dynamically -->
+    </div>
+    <div id="start">
+        <h1>🟩 Minecraft Clone</h1>
+        <p class="sub">with Villagers, Animals &amp; Trading</p>
+        <div id="controls-grid">
+            <div class="ctrl-row"><b>WASD</b> — Move</div>
+            <div class="ctrl-row"><b>Space</b> — Jump</div>
+            <div class="ctrl-row"><b>Left Click</b> — Break</div>
+            <div class="ctrl-row"><b>Right Click</b> — Place / Trade</div>
+            <div class="ctrl-row"><b>Scroll / 1–8</b> — Block</div>
+            <div class="ctrl-row"><b>Shift</b> — Sprint</div>
+            <div class="ctrl-row"><b>F</b> — Fly</div>
+            <div class="ctrl-row"><b>Esc</b> — Pause</div>
+        </div>
+        <button id="startbtn">Click to Play</button>
+    </div>
 
-<script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
+    <script type="module">
+        import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.165/build/three.module.js";
 
-// ── DOM ──────────────────────────────────────────────────────────────────────
-const startEl  = document.getElementById("start");
-const startBtn = document.getElementById("startbtn");
-const hotbarEl = document.getElementById("hotbar");
-const healthEl = document.getElementById("health");
-const hudEl    = document.getElementById("hud");
-const msgEl    = document.getElementById("msg");
+        // ── DOM ──────────────────────────────────────────────────────────────
+        const startEl = document.getElementById("start");
+        const startBtn = document.getElementById("startbtn");
+        const hotbarEl = document.getElementById("hotbar");
+        const healthEl = document.getElementById("health");
+        const hudEl = document.getElementById("hud");
+        const msgEl = document.getElementById("msg");
+        const tradeUI = document.getElementById("trade-ui");
+        const tradeItems = document.getElementById("trade-items");
+        const tradeMsg = document.getElementById("trade-msg");
+        const tradeClose = document.getElementById("trade-close");
+        const villagerTag = document.getElementById("villager-tag");
 
-// ── Block definitions ────────────────────────────────────────────────────────
-const BLOCK_TYPES = [
-  { name:"Grass",  color:0x5aa832 },
-  { name:"Dirt",   color:0x8b5a2b },
-  { name:"Stone",  color:0x888888 },
-  { name:"Wood",   color:0x8b6914 },
-  { name:"Leaves", color:0x228b22 },
-  { name:"Sand",   color:0xf4d03f },
-  { name:"Glass",  color:0xaaddff, opacity:0.45 },
-  { name:"Brick",  color:0xb85c38 },
-];
-const NUM_TYPES = BLOCK_TYPES.length;
+        // ── Block definitions ──────────────────────────────────────────────
+        const BLOCK_TYPES = [
+            { name: "Grass", color: 0x5aa832 },
+            { name: "Dirt", color: 0x8b5a2b },
+            { name: "Stone", color: 0x888888 },
+            { name: "Wood", color: 0x8b6914 },
+            { name: "Leaves", color: 0x228b22 },
+            { name: "Sand", color: 0xf4d03f },
+            { name: "Glass", color: 0xaaddff, opacity: 0.45 },
+            { name: "Brick", color: 0xb85c38 },
+        ];
+        const NUM_TYPES = BLOCK_TYPES.length;
 
-// ── Hotbar ───────────────────────────────────────────────────────────────────
-let selectedSlot = 0;
-const inventory  = [0,1,2,3,4,5,6,7];
+        // ── Hotbar ──────────────────────────────────────────────────────────
+        let selectedSlot = 0;
+        const inventory = [0, 1, 2, 3, 4, 5, 6, 7];
 
-function buildHotbar() {
-  hotbarEl.innerHTML = "";
-  inventory.forEach((bi,i) => {
-    const bt = BLOCK_TYPES[bi];
-    const w  = document.createElement("div");
-    w.className = "slot" + (i===selectedSlot?" active":"");
-    w.innerHTML = `<span class="slot-num">${i+1}</span>
-      <div class="slot-icon" style="background:#${bt.color.toString(16).padStart(6,"0")}"></div>
-      <div class="slot-label">${bt.name}</div>`;
-    hotbarEl.appendChild(w);
-  });
-}
-function buildHealth(hp){
-  healthEl.innerHTML="";
-  for(let i=0;i<10;i++){
-    const h=document.createElement("span");
-    h.className="heart";
-    h.textContent=i<hp/10?"❤️":"🖤";
-    healthEl.appendChild(h);
-  }
-}
-buildHotbar(); buildHealth(100);
-
-// ── Renderer / scene ─────────────────────────────────────────────────────────
-const scene    = new THREE.Scene();
-scene.fog      = new THREE.Fog(0x87ceeb, 20, 55);
-
-const camera   = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 150);
-camera.position.set(0,6,10);
-
-const renderer = new THREE.WebGLRenderer({ antialias:false }); // antialias off = faster
-renderer.setPixelRatio(1);                                      // always 1:1 = fastest
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = false;                             // shadows off = big win
-document.body.insertBefore(renderer.domElement, document.getElementById("ui"));
-
-// ── Lighting ─────────────────────────────────────────────────────────────────
-const sun     = new THREE.DirectionalLight(0xfff5cc, 1.2);
-sun.position.set(50,80,50);
-scene.add(sun);
-scene.add(new THREE.AmbientLight(0x6688cc, 0.55));
-scene.add(new THREE.HemisphereLight(0x87ceeb, 0x4a7020, 0.5));
-
-// ── InstancedMesh pool ───────────────────────────────────────────────────────
-// One InstancedMesh per block type; max 20000 instances each.
-const MAX_INST = 20000;
-const boxGeo   = new THREE.BoxGeometry(1,1,1);
-const iMeshes  = BLOCK_TYPES.map(bt =>
-  new THREE.InstancedMesh(
-    boxGeo,
-    new THREE.MeshLambertMaterial({
-      color:bt.color,
-      transparent:bt.opacity!==undefined,
-      opacity:bt.opacity??1,
-    }),
-    MAX_INST
-  )
-);
-iMeshes.forEach(m=>{ m.count=0; scene.add(m); });
-
-// Shared matrix for setting instance transforms
-const _mat = new THREE.Matrix4();
-
-// ── Block data ───────────────────────────────────────────────────────────────
-// Forward:  bkey -> { bi, idx }
-// Reverse:  rkey(bi,idx) -> bkey   (O(1) swap in removeBlock, always correct)
-const blocks = new Map();
-const rMap   = new Map();
-const iCount = new Int32Array(NUM_TYPES);
-
-function bkey(x,y,z){ return `${x|0},${y|0},${z|0}`; }
-function rkey(bi,idx){ return `${bi}:${idx}`; }
-
-function addBlock(x,y,z,bi){
-  x=x|0; y=y|0; z=z|0;
-  const k=bkey(x,y,z);
-  if(blocks.has(k)) return;
-  const mesh=iMeshes[bi];
-  if(iCount[bi]>=MAX_INST) return;
-  const idx=iCount[bi]++;
-  mesh.count=iCount[bi];
-  _mat.makeTranslation(x,y,z);
-  mesh.setMatrixAt(idx,_mat);
-  mesh.instanceMatrix.needsUpdate=true;
-  blocks.set(k,{bi,idx});
-  rMap.set(rkey(bi,idx),k);
-}
-
-function removeBlock(x,y,z){
-  x=x|0; y=y|0; z=z|0;
-  const k=bkey(x,y,z);
-  const info=blocks.get(k);
-  if(!info) return;
-  const {bi,idx}=info;
-  const mesh=iMeshes[bi];
-  const last=iCount[bi]-1;
-
-  blocks.delete(k);
-  rMap.delete(rkey(bi,idx));
-
-  // Swap the last active instance into the freed slot to keep array packed
-  if(idx!==last && last>=0){
-    const lastKey=rMap.get(rkey(bi,last));
-    if(lastKey){
-      mesh.getMatrixAt(last,_mat);
-      mesh.setMatrixAt(idx,_mat);
-      blocks.get(lastKey).idx=idx;
-      rMap.delete(rkey(bi,last));
-      rMap.set(rkey(bi,idx),lastKey);
-    }
-  }
-
-  iCount[bi]=Math.max(0,last);
-  mesh.count=iCount[bi];
-  mesh.instanceMatrix.needsUpdate=true;
-}
-
-function hasBlock(x,y,z){
-  return blocks.has(bkey(Math.round(x),Math.round(y),Math.round(z)));
-}
-
-// ── Terrain generation ───────────────────────────────────────────────────────
-function hmap(x,z){
-  return Math.floor(
-    Math.sin(x*0.28)*Math.cos(z*0.22)*2.5 +
-    Math.sin(x*0.11+z*0.14)*3.5 +
-    Math.cos(x*0.05-z*0.07)*1.5
-  );
-}
-
-const W=30, D=30;
-for(let x=-W;x<=W;x++){
-  for(let z=-D;z<=D;z++){
-    const h=hmap(x,z);
-    const edge=Math.abs(x)>24||Math.abs(z)>24;
-    addBlock(x,-4,z,2);
-    for(let y=-3;y<h-1;y++) addBlock(x,y,z,2);
-    addBlock(x,h-1,z,1);
-    addBlock(x,h,z, edge?5:0);
-    if(!edge && Math.random()<0.018 && Math.abs(x)<24 && Math.abs(z)<24){
-      const th=4+Math.floor(Math.random()*3);
-      for(let t=1;t<=th;t++) addBlock(x,h+t,z,3);
-      for(let lx=-2;lx<=2;lx++) for(let lz=-2;lz<=2;lz++) for(let ly=-1;ly<=2;ly++)
-        if(Math.abs(lx)+Math.abs(lz)+Math.abs(ly)<4) addBlock(x+lx,h+th+ly,z+lz,4);
-    }
-  }
-}
-
-// ── Raycasting (optimised: only check nearby blocks) ─────────────────────────
-// We cast a ray manually through block positions within reach
-const REACH = 6;
-// Pre-allocate reusable objects
-const _rayOrigin = new THREE.Vector3();
-const _rayDir    = new THREE.Vector3();
-const _boxMin    = new THREE.Vector3();
-const _boxMax    = new THREE.Vector3();
-const _box       = new THREE.Box3();
-
-function raycastBlocks(){
-  // Get ray from camera center
-  _rayOrigin.copy(camera.position);
-  _rayDir.set(0,0,-1).applyEuler(camera.rotation).normalize();
-
-  let bestT = Infinity, bestKey = null, bestNormal = null;
-  const ox=_rayOrigin.x, oy=_rayOrigin.y, oz=_rayOrigin.z;
-  const dx=_rayDir.x, dy=_rayDir.y, dz=_rayDir.z;
-
-  // Check a sphere of nearby block positions
-  const cx=Math.round(ox+dx*3), cy=Math.round(oy+dy*3), cz=Math.round(oz+dz*3);
-  for(let bx=cx-REACH;bx<=cx+REACH;bx++){
-    for(let by=cy-REACH;by<=cy+REACH;by++){
-      for(let bz=cz-REACH;bz<=cz+REACH;bz++){
-        const k=bkey(bx,by,bz);
-        if(!blocks.has(k)) continue;
-        // Slab intersection
-        const minX=bx-0.5, maxX=bx+0.5;
-        const minY=by-0.5, maxY=by+0.5;
-        const minZ=bz-0.5, maxZ=bz+0.5;
-        const tx1=(minX-ox)/dx, tx2=(maxX-ox)/dx;
-        const ty1=(minY-oy)/dy, ty2=(maxY-oy)/dy;
-        const tz1=(minZ-oz)/dz, tz2=(maxZ-oz)/dz;
-        const tminX=Math.min(tx1,tx2), tmaxX=Math.max(tx1,tx2);
-        const tminY=Math.min(ty1,ty2), tmaxY=Math.max(ty1,ty2);
-        const tminZ=Math.min(tz1,tz2), tmaxZ=Math.max(tz1,tz2);
-        const tEnter=Math.max(tminX,tminY,tminZ);
-        const tExit =Math.min(tmaxX,tmaxY,tmaxZ);
-        if(tExit<0||tEnter>tExit||tEnter>REACH) continue;
-        if(tEnter<bestT){
-          bestT=tEnter;
-          bestKey=k;
-          // Determine face normal
-          if(tEnter===tminX) bestNormal={x:dx<0?1:-1,y:0,z:0};
-          else if(tEnter===tminY) bestNormal={x:0,y:dy<0?1:-1,z:0};
-          else bestNormal={x:0,y:0,z:dz<0?1:-1};
+        function buildHotbar() {
+            hotbarEl.innerHTML = "";
+            inventory.forEach((bi, i) => {
+                const bt = BLOCK_TYPES[bi];
+                const w = document.createElement("div");
+                w.className = "slot" + (i === selectedSlot ? " active" : "");
+                w.innerHTML =
+                    `<span class="slot-num">${i+1}</span>
+               <div class="slot-icon" style="background:#${bt.color.toString(16).padStart(6,"0")}"></div>
+               <div class="slot-label">${bt.name}</div>`;
+                hotbarEl.appendChild(w);
+            });
         }
-      }
-    }
-  }
-  if(!bestKey) return null;
-  const [bx,by,bz]=bestKey.split(",").map(Number);
-  return {bx,by,bz,normal:bestNormal,key:bestKey};
-}
 
-// ── Block highlight (EdgesGeometry = cheap) ──────────────────────────────────
-const hlEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.02,1.02,1.02));
-const hlMat   = new THREE.LineBasicMaterial({color:0x000000,linewidth:1});
-const highlight = new THREE.LineSegments(hlEdges,hlMat);
-highlight.visible=false;
-scene.add(highlight);
-
-// ── Player ───────────────────────────────────────────────────────────────────
-let velY=0, onGround=false, flyMode=false, health=100;
-let yaw=0, pitch=0, started=false, worldTime=0;
-const keys={};
-// Reuse vectors in animate loop
-const _fwd  = new THREE.Vector3();
-const _rgt  = new THREE.Vector3();
-const _move = new THREE.Vector3();
-const _UP   = new THREE.Vector3(0,1,0);
-
-document.addEventListener("keydown",e=>{
-  keys[e.code]=true;
-  if(!started) return;
-  if(e.code==="Space"&&!flyMode&&onGround){ velY=0.13; onGround=false; }
-  if(e.key==="f"||e.key==="F"){ flyMode=!flyMode; velY=0; }
-  if(e.key>="1"&&e.key<="8"){ selectedSlot=parseInt(e.key)-1; buildHotbar(); }
-});
-document.addEventListener("keyup",e=>{ keys[e.code]=false; });
-document.addEventListener("wheel",e=>{
-  if(!started) return;
-  selectedSlot=(selectedSlot+Math.sign(e.deltaY)+8)%8;
-  buildHotbar();
-},{passive:true});
-document.addEventListener("mousemove",e=>{
-  if(document.pointerLockElement!==renderer.domElement) return;
-  yaw  -=e.movementX*0.002;
-  pitch =Math.max(-1.45,Math.min(1.45,pitch-e.movementY*0.002));
-  camera.rotation.order="YXZ";
-  camera.rotation.y=yaw;
-  camera.rotation.x=pitch;
-});
-
-// ── Click: break / place ─────────────────────────────────────────────────────
-let lastBreak=0,lastPlace=0;
-renderer.domElement.addEventListener("mousedown",e=>{
-  if(!started) return;
-  const now=Date.now();
-  const hit=raycastBlocks();
-  if(e.button===0&&hit&&now-lastBreak>200){
-    lastBreak=now;
-    removeBlock(hit.bx,hit.by,hit.bz);
-    highlight.visible=false;
-  }
-  if(e.button===2&&hit&&now-lastPlace>250){
-    lastPlace=now;
-    const px=hit.bx+hit.normal.x, py=hit.by+hit.normal.y, pz=hit.bz+hit.normal.z;
-    const dx=Math.abs(px-Math.round(camera.position.x));
-    const dy=Math.abs(py-Math.round(camera.position.y-0.9));
-    const dz=Math.abs(pz-Math.round(camera.position.z));
-    if(dx+dy+dz>0) addBlock(px,py,pz,inventory[selectedSlot]);
-  }
-});
-renderer.domElement.addEventListener("contextmenu",e=>e.preventDefault());
-
-// ── Reuse sky color object ────────────────────────────────────────────────────
-const _skyColor=new THREE.Color();
-
-// ── Frame counter for HUD throttle ───────────────────────────────────────────
-let frameCount=0;
-
-// ── Animate ──────────────────────────────────────────────────────────────────
-function animate(){
-  requestAnimationFrame(animate);
-  if(!started) return;
-  frameCount++;
-
-  // Movement
-  const speed=keys["ShiftLeft"]?0.18:0.1;
-  _fwd.set(-Math.sin(yaw),0,-Math.cos(yaw));
-  _rgt.set( Math.cos(yaw),0,-Math.sin(yaw));
-  _move.set(0,0,0);
-  if(keys["KeyW"]) _move.add(_fwd);
-  if(keys["KeyS"]) _move.sub(_fwd);
-  if(keys["KeyA"]) _move.sub(_rgt);
-  if(keys["KeyD"]) _move.add(_rgt);
-  if(_move.lengthSq()>0) _move.normalize().multiplyScalar(speed);
-
-  if(flyMode){
-    if(keys["Space"])     camera.position.y+=0.15;
-    if(keys["ShiftLeft"]) camera.position.y-=0.15;
-    camera.position.add(_move);
-  } else {
-    const nx=camera.position.x+_move.x;
-    const nz=camera.position.z+_move.z;
-    const fy=Math.round(camera.position.y-1.7);
-    const cy=Math.round(camera.position.y-0.9);
-    if(!hasBlock(nx+0.3,fy,camera.position.z)&&!hasBlock(nx-0.3,fy,camera.position.z)&&
-       !hasBlock(nx+0.3,cy,camera.position.z)&&!hasBlock(nx-0.3,cy,camera.position.z))
-      camera.position.x=nx;
-    if(!hasBlock(camera.position.x,fy,nz+0.3)&&!hasBlock(camera.position.x,fy,nz-0.3)&&
-       !hasBlock(camera.position.x,cy,nz+0.3)&&!hasBlock(camera.position.x,cy,nz-0.3))
-      camera.position.z=nz;
-
-    // Only apply gravity when airborne; clamp to small negative so we stay grounded without bouncing
-    if(!onGround) velY-=0.005;
-    else velY=Math.max(velY,-0.01); // tiny downward bias keeps us touching the floor
-
-    camera.position.y+=velY;
-
-    const gx=Math.round(camera.position.x), gz=Math.round(camera.position.z);
-    onGround=false;
-
-    // Floor check: scan the block directly underfoot
-    const footY=camera.position.y-1.75;
-    const floorBy=Math.floor(footY+0.01); // +epsilon avoids snapping through at exactly integer boundary
-    for(let bx=gx-1;bx<=gx+1;bx++) for(let bz=gz-1;bz<=gz+1;bz++){
-      if(blocks.has(bkey(bx,floorBy,bz))&&Math.abs(bx-camera.position.x)<0.75&&Math.abs(bz-camera.position.z)<0.75){
-        if(velY<=0){
-          camera.position.y=floorBy+1+1.75;
-          velY=0;
-          onGround=true;
+        function buildHealth(hp) {
+            healthEl.innerHTML = "";
+            for (let i = 0; i < 10; i++) {
+                const h = document.createElement("span");
+                h.className = "heart";
+                h.textContent = i < hp / 10 ? "❤️" : "🖤";
+                healthEl.appendChild(h);
+            }
         }
-      }
-    }
+        buildHotbar();
+        buildHealth(100);
 
-    // Ceiling check
-    const headBy=Math.ceil(camera.position.y+0.2);
-    if(blocks.has(bkey(Math.round(camera.position.x),headBy,Math.round(camera.position.z)))&&velY>0) velY=0;
+        // ── Renderer / scene ────────────────────────────────────────────────
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0x87ceeb, 20, 55);
 
-    if(camera.position.y<-20){ camera.position.set(0,10,0); velY=0; onGround=false; }
-  }
+        const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 150);
+        camera.position.set(0, 6, 10);
 
-  // Day/night (update sky only every 10 frames)
-  worldTime+=0.0003;
-  if(frameCount%10===0){
-    const dayT=Math.sin(worldTime);
-    _skyColor.setRGB(Math.max(0,dayT*0.53),Math.max(0.05,dayT*0.81+0.05),Math.max(0.15,dayT*0.55+0.45));
-    scene.background=_skyColor;
-    scene.fog.color.copy(_skyColor);
-    sun.intensity    =Math.max(0.05,dayT*1.2);
-    const sa=worldTime*0.5;
-    sun.position.set(Math.cos(sa)*80,Math.sin(sa)*80,40);
-  }
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setPixelRatio(1);
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.shadowMap.enabled = false;
+        document.body.insertBefore(renderer.domElement, document.getElementById("ui"));
 
-  // Highlight (update every frame but it's cheap now)
-  const hit=raycastBlocks();
-  if(hit){
-    highlight.visible=true;
-    highlight.position.set(hit.bx,hit.by,hit.bz);
-  } else {
-    highlight.visible=false;
-  }
+        // ── Lighting ────────────────────────────────────────────────────────
+        const sun = new THREE.DirectionalLight(0xfff5cc, 1.2);
+        sun.position.set(50, 80, 50);
+        scene.add(sun);
+        scene.add(new THREE.AmbientLight(0x6688cc, 0.55));
+        scene.add(new THREE.HemisphereLight(0x87ceeb, 0x4a7020, 0.5));
 
-  // HUD (update every 20 frames)
-  if(frameCount%20===0){
-    const tod=((worldTime%(Math.PI*2))/(Math.PI*2));
-    const hrs=Math.floor(tod*24), mins=Math.floor((tod*24%1)*60);
-    const phase=hrs>=6&&hrs<20?"☀️":"🌙";
-    hudEl.innerHTML=
-      `XYZ: ${Math.round(camera.position.x)}, ${Math.round(camera.position.y)}, ${Math.round(camera.position.z)}<br>`+
-      `Block: ${BLOCK_TYPES[inventory[selectedSlot]].name}<br>`+
-      `${phase} ${hrs.toString().padStart(2,"0")}:${mins.toString().padStart(2,"0")}<br>`+
-      `${flyMode?"✈️ Fly":"🚶 Walk"} (F toggles)`;
-  }
+        // ── InstancedMesh pool ─────────────────────────────────────────────
+        const MAX_INST = 20000;
+        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+        const iMeshes = BLOCK_TYPES.map(bt =>
+            new THREE.InstancedMesh(
+                boxGeo,
+                new THREE.MeshLambertMaterial({
+                    color: bt.color,
+                    transparent: bt.opacity !== undefined,
+                    opacity: bt.opacity ?? 1,
+                }),
+                MAX_INST
+            )
+        );
+        iMeshes.forEach(m => { m.count = 0;
+            scene.add(m); });
 
-  renderer.render(scene,camera);
-}
+        const _mat = new THREE.Matrix4();
+        const blocks = new Map();
+        const rMap = new Map();
+        const iCount = new Int32Array(NUM_TYPES);
 
-// ── Start ─────────────────────────────────────────────────────────────────────
-startBtn.onclick=()=>{
-  startEl.style.display="none";
-  renderer.domElement.requestPointerLock();
-  started=true;
-  animate();
-};
-document.addEventListener("pointerlockchange",()=>{
-  if(!started) return;
-  if(!document.pointerLockElement){
-    msgEl.style.display="block";
-    msgEl.innerHTML="Paused<br><small style='font-size:15px;font-weight:normal'>Click to resume</small>";
-  } else { msgEl.style.display="none"; }
-});
-renderer.domElement.addEventListener("click",()=>{
-  if(started&&document.pointerLockElement!==renderer.domElement) renderer.domElement.requestPointerLock();
-});
-window.addEventListener("resize",()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-});
-</script>
+        function bkey(x, y, z) { return `${x|0},${y|0},${z|0}`; }
+
+        function rkey(bi, idx) { return `${bi}:${idx}`; }
+
+        function addBlock(x, y, z, bi) {
+            x = x | 0;
+            y = y | 0;
+            z = z | 0;
+            const k = bkey(x, y, z);
+            if (blocks.has(k)) return;
+            const mesh = iMeshes[bi];
+            if (iCount[bi] >= MAX_INST) return;
+            const idx = iCount[bi]++;
+            mesh.count = iCount[bi];
+            _mat.makeTranslation(x, y, z);
+            mesh.setMatrixAt(idx, _mat);
+            mesh.instanceMatrix.needsUpdate = true;
+            blocks.set(k, { bi, idx });
+            rMap.set(rkey(bi, idx), k);
+        }
+
+        function removeBlock(x, y, z) {
+            x = x | 0;
+            y = y | 0;
+            z = z | 0;
+            const k = bkey(x, y, z);
+            const info = blocks.get(k);
+            if (!info) return;
+            const { bi, idx } = info;
+            const mesh = iMeshes[bi];
+            const last = iCount[bi] - 1;
+            blocks.delete(k);
+            rMap.delete(rkey(bi, idx));
+            if (idx !== last && last >= 0) {
+                const lastKey = rMap.get(rkey(bi, last));
+                if (lastKey) {
+                    mesh.getMatrixAt(last, _mat);
+                    mesh.setMatrixAt(idx, _mat);
+                    blocks.get(lastKey).idx = idx;
+                    rMap.delete(rkey(bi, last));
+                    rMap.set(rkey(bi, idx), lastKey);
+                }
+            }
+            iCount[bi] = Math.max(0, last);
+            mesh.count = iCount[bi];
+            mesh.instanceMatrix.needsUpdate = true;
+        }
+
+        function hasBlock(x, y, z) {
+            return blocks.has(bkey(Math.round(x), Math.round(y), Math.round(z)));
+        }
+
+        // ── Terrain generation ─────────────────────────────────────────────
+        function hmap(x, z) {
+            return Math.floor(
+                Math.sin(x * 0.28) * Math.cos(z * 0.22) * 2.5 +
+                Math.sin(x * 0.11 + z * 0.14) * 3.5 +
+                Math.cos(x * 0.05 - z * 0.07) * 1.5
+            );
+        }
+
+        const W = 30,
+            D = 30;
+        for (let x = -W; x <= W; x++) {
+            for (let z = -D; z <= D; z++) {
+                const h = hmap(x, z);
+                const edge = Math.abs(x) > 24 || Math.abs(z) > 24;
+                addBlock(x, -4, z, 2);
+                for (let y = -3; y < h - 1; y++) addBlock(x, y, z, 2);
+                addBlock(x, h - 1, z, 1);
+                addBlock(x, h, z, edge ? 5 : 0);
+                if (!edge && Math.random() < 0.018 && Math.abs(x) < 24 && Math.abs(z) < 24) {
+                    const th = 4 + Math.floor(Math.random() * 3);
+                    for (let t = 1; t <= th; t++) addBlock(x, h + t, z, 3);
+                    for (let lx = -2; lx <= 2; lx++)
+                        for (let lz = -2; lz <= 2; lz++)
+                            for (let ly = -1; ly <= 2; ly++)
+                                if (Math.abs(lx) + Math.abs(lz) + Math.abs(ly) < 4)
+                                    addBlock(x + lx, h + th + ly, z + lz, 4);
+                }
+            }
+        }
+
+        // ── Global ground height helper ────────────────────────────────────
+        function getGroundHeight(x, z) {
+            const rx = Math.round(x),
+                rz = Math.round(z);
+            // Check from top down
+            for (let y = 25; y >= -5; y--) {
+                if (blocks.has(bkey(rx, y, rz))) {
+                    return y + 0.5;
+                }
+            }
+            return hmap(rx, rz) + 0.5;
+        }
+
+        // ── Raycasting (blocks) ─────────────────────────────────────────────
+        const REACH = 6;
+        const _rayOrigin = new THREE.Vector3();
+        const _rayDir = new THREE.Vector3();
+
+        function raycastBlocks() {
+            _rayOrigin.copy(camera.position);
+            _rayDir.set(0, 0, -1).applyEuler(camera.rotation).normalize();
+            let bestT = Infinity,
+                bestKey = null,
+                bestNormal = null;
+            const ox = _rayOrigin.x,
+                oy = _rayOrigin.y,
+                oz = _rayOrigin.z;
+            const dx = _rayDir.x,
+                dy = _rayDir.y,
+                dz = _rayDir.z;
+            const cx = Math.round(ox + dx * 3),
+                cy = Math.round(oy + dy * 3),
+                cz = Math.round(oz + dz * 3);
+            for (let bx = cx - REACH; bx <= cx + REACH; bx++) {
+                for (let by = cy - REACH; by <= cy + REACH; by++) {
+                    for (let bz = cz - REACH; bz <= cz + REACH; bz++) {
+                        const k = bkey(bx, by, bz);
+                        if (!blocks.has(k)) continue;
+                        const minX = bx - 0.5,
+                            maxX = bx + 0.5;
+                        const minY = by - 0.5,
+                            maxY = by + 0.5;
+                        const minZ = bz - 0.5,
+                            maxZ = bz + 0.5;
+                        const tx1 = (minX - ox) / dx,
+                            tx2 = (maxX - ox) / dx;
+                        const ty1 = (minY - oy) / dy,
+                            ty2 = (maxY - oy) / dy;
+                        const tz1 = (minZ - oz) / dz,
+                            tz2 = (maxZ - oz) / dz;
+                        const tminX = Math.min(tx1, tx2),
+                            tmaxX = Math.max(tx1, tx2);
+                        const tminY = Math.min(ty1, ty2),
+                            tmaxY = Math.max(ty1, ty2);
+                        const tminZ = Math.min(tz1, tz2),
+                            tmaxZ = Math.max(tz1, tz2);
+                        const tEnter = Math.max(tminX, tminY, tminZ);
+                        const tExit = Math.min(tmaxX, tmaxY, tmaxZ);
+                        if (tExit < 0 || tEnter > tExit || tEnter > REACH) continue;
+                        if (tEnter < bestT) {
+                            bestT = tEnter;
+                            bestKey = k;
+                            if (tEnter === tminX) bestNormal = { x: dx < 0 ? 1 : -1, y: 0, z: 0 };
+                            else if (tEnter === tminY) bestNormal = { x: 0, y: dy < 0 ? 1 : -1, z: 0 };
+                            else bestNormal = { x: 0, y: 0, z: dz < 0 ? 1 : -1 };
+                        }
+                    }
+                }
+            }
+            if (!bestKey) return null;
+            const [bx, by, bz] = bestKey.split(",").map(Number);
+            return { bx, by, bz, normal: bestNormal, key: bestKey };
+        }
+
+        // ── Block highlight ──────────────────────────────────────────────────
+        const hlEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(1.02, 1.02, 1.02));
+        const hlMat = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 });
+        const highlight = new THREE.LineSegments(hlEdges, hlMat);
+        highlight.visible = false;
+        scene.add(highlight);
+
+        // ════════════════════════════════════════════════════════════════════
+        //  VILLAGERS (unchanged, but tag class renamed)
+        // ════════════════════════════════════════════════════════════════════
+
+        const villagers = [];
+        const VILLAGER_COUNT = 12;
+        const VILLAGER_SPEED = 0.018;
+        const WANDER_RADIUS = 7;
+        const IDLE_TIME_MIN = 80;
+        const IDLE_TIME_MAX = 220;
+
+        const VILLAGER_TRADES = [
+            { bi: 0, name: "Grass", emoji: "🌿" },
+            { bi: 1, name: "Dirt", emoji: "🟫" },
+            { bi: 2, name: "Stone", emoji: "🪨" },
+            { bi: 3, name: "Wood", emoji: "🪵" },
+            { bi: 4, name: "Leaves", emoji: "🍃" },
+            { bi: 5, name: "Sand", emoji: "🏝️" },
+            { bi: 7, name: "Brick", emoji: "🧱" },
+        ];
+
+        class Villager {
+            constructor(x, z) {
+                const groundY = getGroundHeight(x, z);
+                this.position = new THREE.Vector3(x, groundY, z);
+                this.target = null;
+                this.state = "idle";
+                this.timer = 60 + Math.random() * 100;
+                this.speed = VILLAGER_SPEED * (0.85 + Math.random() * 0.3);
+                this.yaw = Math.random() * Math.PI * 2;
+                this.walkCycle = 0;
+                this.trades = this.generateTrades();
+                this.group = new THREE.Group();
+                this.group.position.copy(this.position);
+                this.buildModel();
+                scene.add(this.group);
+                this.alive = true;
+                this.tagEl = null;
+                this.createTag();
+                this.meshes = [];
+                this.group.children.forEach(c => {
+                    if (c.isMesh) {
+                        c.userData.isVillager = true;
+                        c.userData.villagerRef = this;
+                        this.meshes.push(c);
+                    }
+                });
+            }
+
+            generateTrades() {
+                const shuffled = [...VILLAGER_TRADES].sort(() => Math.random() - 0.5);
+                return shuffled.slice(0, 3);
+            }
+
+            buildModel() {
+                const skin = 0xd4a574;
+                const robe = 0x8b6b4d;
+                const hat = 0x7a5a3a;
+                const nose = 0xc4956a;
+                const armColor = 0xc9a07a;
+
+                const bodyGeo = new THREE.BoxGeometry(0.44, 0.44, 0.28);
+                const bodyMat = new THREE.MeshLambertMaterial({ color: robe });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.set(0, 0.62, 0);
+                this.group.add(body);
+
+                const headGeo = new THREE.BoxGeometry(0.32, 0.32, 0.32);
+                const headMat = new THREE.MeshLambertMaterial({ color: skin });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.set(0, 1.02, 0);
+                this.group.add(head);
+                this.head = head;
+
+                const noseGeo = new THREE.BoxGeometry(0.07, 0.07, 0.07);
+                const noseMat = new THREE.MeshLambertMaterial({ color: nose });
+                const noseMesh = new THREE.Mesh(noseGeo, noseMat);
+                noseMesh.position.set(0, 0.98, 0.19);
+                this.group.add(noseMesh);
+
+                const hatGeo = new THREE.BoxGeometry(0.44, 0.06, 0.44);
+                const hatMat = new THREE.MeshLambertMaterial({ color: hat });
+                const hatMesh = new THREE.Mesh(hatGeo, hatMat);
+                hatMesh.position.set(0, 1.20, 0);
+                this.group.add(hatMesh);
+
+                const hatTopGeo = new THREE.BoxGeometry(0.28, 0.10, 0.28);
+                const hatTopMat = new THREE.MeshLambertMaterial({ color: hat });
+                const hatTop = new THREE.Mesh(hatTopGeo, hatTopMat);
+                hatTop.position.set(0, 1.28, 0);
+                this.group.add(hatTop);
+
+                const armGeo = new THREE.BoxGeometry(0.07, 0.30, 0.07);
+                const armMat = new THREE.MeshLambertMaterial({ color: armColor });
+                const lArm = new THREE.Mesh(armGeo, armMat);
+                lArm.position.set(-0.28, 0.72, 0);
+                this.group.add(lArm);
+                this.lArm = lArm;
+
+                const rArm = new THREE.Mesh(armGeo, armMat);
+                rArm.position.set(0.28, 0.72, 0);
+                this.group.add(rArm);
+                this.rArm = rArm;
+
+                const legGeo = new THREE.BoxGeometry(0.10, 0.18, 0.10);
+                const legMat = new THREE.MeshLambertMaterial({ color: 0x5a4a3a });
+                const lLeg = new THREE.Mesh(legGeo, legMat);
+                lLeg.position.set(-0.10, 0.09, 0);
+                this.group.add(lLeg);
+                const rLeg = new THREE.Mesh(legGeo, legMat);
+                rLeg.position.set(0.10, 0.09, 0);
+                this.group.add(rLeg);
+
+                const s = 0.92 + Math.random() * 0.16;
+                this.group.scale.set(s, s, s);
+            }
+
+            createTag() {
+                const el = document.createElement("div");
+                el.className = "entity-tag";
+                el.textContent = "🧑‍🌾 Villager";
+                document.getElementById("ui").appendChild(el);
+                this.tagEl = el;
+            }
+
+            updateTag() {
+                if (!this.tagEl || !this.alive) return;
+                const pos = new THREE.Vector3();
+                this.group.getWorldPosition(pos);
+                pos.y += 1.55;
+                pos.project(camera);
+                const x = (pos.x * 0.5 + 0.5) * innerWidth;
+                const y = (-pos.y * 0.5 + 0.5) * innerHeight;
+                if (pos.z > 1) {
+                    this.tagEl.style.display = "none";
+                    return;
+                }
+                this.tagEl.style.display = "block";
+                this.tagEl.style.left = x + "px";
+                this.tagEl.style.top = y + "px";
+                const dist = camera.position.distanceTo(this.position);
+                const scale = Math.max(0.6, Math.min(1.4, 12 / (dist + 2)));
+                this.tagEl.style.fontSize = (11 * scale) + "px";
+            }
+
+            isBlocked(x, z) {
+                const px = Math.round(x),
+                    pz = Math.round(z);
+                const gy = getGroundHeight(px, pz);
+                const bodyY = Math.round(gy + 0.6);
+                const headY = Math.round(gy + 1.0);
+                const standY = Math.round(gy - 0.1);
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dz = -1; dz <= 1; dz++) {
+                        const cx = Math.round(x + dx * 0.3),
+                            cz = Math.round(z + dz * 0.3);
+                        if (hasBlock(cx, bodyY, cz) || hasBlock(cx, headY, cz)) {
+                            if (!(cx === Math.round(x) && cz === Math.round(z) && standY === Math.round(gy - 0.1))) {
+                                return true;
+                            }
+                        }
+                        if (hasBlock(cx, Math.round(gy), cz) && !(cx === Math.round(x) && cz === Math.round(z))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            pickTarget() {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 2 + Math.random() * WANDER_RADIUS;
+                let tx = this.position.x + Math.cos(angle) * dist;
+                let tz = this.position.z + Math.sin(angle) * dist;
+                tx = Math.max(-26, Math.min(26, tx));
+                tz = Math.max(-26, Math.min(26, tz));
+                const gy = getGroundHeight(tx, tz);
+                if (gy < -2) {
+                    this.target = null;
+                    this.state = "idle";
+                    this.timer = 30;
+                    return;
+                }
+                if (this.isBlocked(tx, tz)) {
+                    this.target = null;
+                    this.state = "idle";
+                    this.timer = 20;
+                    return;
+                }
+                this.target = new THREE.Vector3(tx, gy, tz);
+                this.state = "wandering";
+            }
+
+            update() {
+                if (!this.alive) return;
+                this.timer--;
+                if (this.state === "idle") {
+                    if (this.timer <= 0) {
+                        this.pickTarget();
+                    }
+                } else if (this.state === "wandering") {
+                    if (!this.target) {
+                        this.state = "idle";
+                        this.timer = 40 + Math.random() * 80;
+                        return;
+                    }
+                    const dx = this.target.x - this.position.x;
+                    const dz = this.target.z - this.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist < 0.15) {
+                        this.state = "idle";
+                        this.timer = IDLE_TIME_MIN + Math.random() * IDLE_TIME_MAX;
+                        this.target = null;
+                        return;
+                    }
+                    const step = Math.min(this.speed, dist);
+                    const nx = this.position.x + (dx / dist) * step;
+                    const nz = this.position.z + (dz / dist) * step;
+                    if (!this.isBlocked(nx, nz)) {
+                        const gy = getGroundHeight(nx, nz);
+                        if (gy > -2 && !this.isBlocked(nx, nz)) {
+                            this.position.x = nx;
+                            this.position.z = nz;
+                            this.position.y = gy;
+                            this.yaw = Math.atan2(dx, dz);
+                            this.walkCycle += step * 3.5;
+                            if (this.lArm) {
+                                const swing = Math.sin(this.walkCycle) * 0.5;
+                                this.lArm.rotation.x = swing;
+                                this.rArm.rotation.x = -swing;
+                            }
+                        } else {
+                            this.state = "idle";
+                            this.timer = 20 + Math.random() * 30;
+                            this.target = null;
+                        }
+                    } else {
+                        this.state = "idle";
+                        this.timer = 20 + Math.random() * 40;
+                        this.target = null;
+                    }
+                }
+                this.group.position.copy(this.position);
+                this.group.rotation.y = this.yaw;
+                this.updateTag();
+                this.group.children.forEach(c => {
+                    if (c.isMesh) {
+                        c.userData.isVillager = true;
+                        c.userData.villagerRef = this;
+                    }
+                });
+            }
+
+            destroy() {
+                this.alive = false;
+                if (this.tagEl) {
+                    this.tagEl.remove();
+                    this.tagEl = null;
+                }
+                scene.remove(this.group);
+                const idx = villagers.indexOf(this);
+                if (idx !== -1) villagers.splice(idx, 1);
+            }
+
+            getTradeItems() {
+                return this.trades;
+            }
+
+            doTrade(itemIndex) {
+                const trade = this.trades[itemIndex];
+                if (!trade) return false;
+                inventory[selectedSlot] = trade.bi;
+                buildHotbar();
+                this.trades.splice(itemIndex, 1);
+                if (this.trades.length === 0) {
+                    setTimeout(() => {
+                        if (this.alive) {
+                            this.trades = this.generateTrades();
+                        }
+                    }, 3000);
+                }
+                return true;
+            }
+        }
+
+        // ── Spawn villagers ──────────────────────────────────────────────────
+        function spawnVillagers(count) {
+            let placed = 0,
+                attempts = 0;
+            while (placed < count && attempts < 500) {
+                attempts++;
+                const x = (Math.random() - 0.5) * 44;
+                const z = (Math.random() - 0.5) * 44;
+                if (Math.abs(x) < 3 && Math.abs(z) < 3) continue;
+                const gy = getGroundHeight(x, z);
+                if (gy < -1 || gy > 12) continue;
+                let tooClose = false;
+                for (let dx = -2; dx <= 2; dx++) {
+                    for (let dz = -2; dz <= 2; dz++) {
+                        for (let dy = 1; dy <= 4; dy++) {
+                            if (blocks.has(bkey(Math.round(x + dx), Math.round(gy + dy), Math.round(z + dz)))) {
+                                tooClose = true;
+                                break;
+                            }
+                        }
+                        if (tooClose) break;
+                    }
+                    if (tooClose) break;
+                }
+                if (tooClose) continue;
+                let tooNear = false;
+                for (const v of villagers) {
+                    if (v.position.distanceTo(new THREE.Vector3(x, 0, z)) < 4) { tooNear = true; break; }
+                }
+                if (tooNear) continue;
+                const villager = new Villager(x, z);
+                villagers.push(villager);
+                placed++;
+            }
+            console.log(`Spawned ${placed} villagers`);
+        }
+
+        // ── Villager raycasting for trade ──────────────────────────────────
+        const raycaster = new THREE.Raycaster();
+        const _mouse = new THREE.Vector2();
+
+        function getVillagerAtScreen(screenX, screenY) {
+            _mouse.x = (screenX / innerWidth) * 2 - 1;
+            _mouse.y = -(screenY / innerHeight) * 2 + 1;
+            raycaster.setFromCamera(_mouse, camera);
+            const meshes = [];
+            for (const v of villagers) {
+                if (!v.alive) continue;
+                v.group.children.forEach(c => {
+                    if (c.isMesh) meshes.push(c);
+                });
+            }
+            const hits = raycaster.intersectObjects(meshes);
+            if (hits.length > 0) {
+                let obj = hits[0].object;
+                while (obj) {
+                    if (obj.userData && obj.userData.isVillager) {
+                        return obj.userData.villagerRef;
+                    }
+                    obj = obj.parent;
+                }
+            }
+            return null;
+        }
+
+        // ── Trade UI ─────────────────────────────────────────────────────────
+        let currentTradeVillager = null;
+
+        function openTradeUI(villager) {
+            currentTradeVillager = villager;
+            const items = villager.getTradeItems();
+            tradeItems.innerHTML = "";
+            tradeMsg.textContent = "";
+            if (items.length === 0) {
+                tradeItems.innerHTML =
+                    `<div style="color:#aab;padding:12px;">This villager has nothing to trade right now.<br>Come back later!</div>`;
+            } else {
+                items.forEach((trade, idx) => {
+                    const div = document.createElement("div");
+                    div.className = "trade-item";
+                    const color = BLOCK_TYPES[trade.bi].color;
+                    const colorHex = "#" + color.toString(16).padStart(6, "0");
+                    div.innerHTML = `
+                <div class="info">
+                  <div class="icon" style="background:${colorHex}"></div>
+                  <span class="name">${trade.emoji} ${trade.name}</span>
+                </div>
+                <button class="btn-trade" data-idx="${idx}">Trade</button>
+              `;
+                    tradeItems.appendChild(div);
+                });
+                tradeItems.querySelectorAll(".btn-trade").forEach(btn => {
+                    btn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        const idx = parseInt(btn.dataset.idx);
+                        handleTrade(idx);
+                    });
+                });
+            }
+            tradeUI.style.display = "block";
+        }
+
+        function handleTrade(idx) {
+            if (!currentTradeVillager || !currentTradeVillager.alive) {
+                tradeMsg.textContent = "❌ This villager is gone!";
+                setTimeout(() => closeTradeUI(), 1200);
+                return;
+            }
+            const success = currentTradeVillager.doTrade(idx);
+            if (success) {
+                tradeMsg.textContent = "✅ Traded! Item added to your hotbar.";
+                const items = currentTradeVillager.getTradeItems();
+                if (items.length === 0) {
+                    setTimeout(() => {
+                        if (currentTradeVillager && currentTradeVillager.alive) {
+                            openTradeUI(currentTradeVillager);
+                        } else {
+                            closeTradeUI();
+                        }
+                    }, 600);
+                } else {
+                    setTimeout(() => {
+                        if (currentTradeVillager && currentTradeVillager.alive) {
+                            openTradeUI(currentTradeVillager);
+                            tradeMsg.textContent = "✅ Traded!";
+                        }
+                    }, 300);
+                }
+            } else {
+                tradeMsg.textContent = "❌ Trade failed!";
+            }
+        }
+
+        function closeTradeUI() {
+            tradeUI.style.display = "none";
+            currentTradeVillager = null;
+        }
+        tradeClose.addEventListener("click", closeTradeUI);
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  ANIMALS – new feature
+        // ─────────────────────────────────────────────────────────────────────
+
+        const ANIMAL_TYPES = [
+            { name: "Cow", color: 0x8B5A2B, scale: 1.0, bodyColor: 0x8B5A2B, headColor: 0xA67B5B },
+            { name: "Pig", color: 0xFFB6C1, scale: 0.9, bodyColor: 0xFFB6C1, headColor: 0xFF8C94 },
+            { name: "Sheep", color: 0xEEEEEE, scale: 0.95, bodyColor: 0xEEEEEE, headColor: 0xDDDDDD },
+            { name: "Chicken", color: 0xF5DEB3, scale: 0.6, bodyColor: 0xF5DEB3, headColor: 0xE6C8A8 },
+        ];
+
+        const animals = [];
+        const ANIMAL_COUNT = 18;
+        const ANIMAL_SPEED = 0.012;
+        const ANIMAL_WANDER_RADIUS = 5;
+
+        class Animal {
+            constructor(x, z, typeIndex) {
+                const groundY = getGroundHeight(x, z);
+                this.type = ANIMAL_TYPES[typeIndex];
+                this.position = new THREE.Vector3(x, groundY, z);
+                this.target = null;
+                this.state = "idle";
+                this.timer = 60 + Math.random() * 100;
+                this.speed = ANIMAL_SPEED * (0.8 + Math.random() * 0.4);
+                this.yaw = Math.random() * Math.PI * 2;
+                this.walkCycle = 0;
+                this.group = new THREE.Group();
+                this.group.position.copy(this.position);
+                this.buildModel();
+                scene.add(this.group);
+                this.alive = true;
+                this.tagEl = null;
+                this.createTag();
+                // store for raycasting (not used but for consistency)
+                this.meshes = [];
+                this.group.children.forEach(c => {
+                    if (c.isMesh) {
+                        c.userData.isAnimal = true;
+                        c.userData.animalRef = this;
+                        this.meshes.push(c);
+                    }
+                });
+            }
+
+            buildModel() {
+                const bodyColor = this.type.bodyColor;
+                const headColor = this.type.headColor;
+                const scale = this.type.scale || 1.0;
+
+                // Body
+                const bodyGeo = new THREE.BoxGeometry(0.5 * scale, 0.35 * scale, 0.6 * scale);
+                const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.set(0, 0.25 * scale, 0);
+                this.group.add(body);
+
+                // Head
+                const headGeo = new THREE.BoxGeometry(0.3 * scale, 0.3 * scale, 0.3 * scale);
+                const headMat = new THREE.MeshLambertMaterial({ color: headColor });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.set(0, 0.45 * scale, 0.35 * scale);
+                this.group.add(head);
+                this.head = head;
+
+                // Legs (4)
+                const legGeo = new THREE.BoxGeometry(0.08 * scale, 0.2 * scale, 0.08 * scale);
+                const legMat = new THREE.MeshLambertMaterial({ color: 0x4a3a2a });
+                const legPositions = [
+                    [-0.18 * scale, 0.1 * scale, -0.2 * scale],
+                    [0.18 * scale, 0.1 * scale, -0.2 * scale],
+                    [-0.18 * scale, 0.1 * scale, 0.2 * scale],
+                    [0.18 * scale, 0.1 * scale, 0.2 * scale]
+                ];
+                this.legs = [];
+                legPositions.forEach(pos => {
+                    const leg = new THREE.Mesh(legGeo, legMat);
+                    leg.position.set(pos[0], pos[1], pos[2]);
+                    this.group.add(leg);
+                    this.legs.push(leg);
+                });
+
+                // For chicken: add a beak and comb (simple)
+                if (this.type.name === "Chicken") {
+                    const beakGeo = new THREE.BoxGeometry(0.04 * scale, 0.04 * scale, 0.08 * scale);
+                    const beakMat = new THREE.MeshLambertMaterial({ color: 0xffaa00 });
+                    const beak = new THREE.Mesh(beakGeo, beakMat);
+                    beak.position.set(0, 0.45 * scale, 0.55 * scale);
+                    this.group.add(beak);
+                    const combGeo = new THREE.BoxGeometry(0.12 * scale, 0.08 * scale, 0.04 * scale);
+                    const combMat = new THREE.MeshLambertMaterial({ color: 0xff3333 });
+                    const comb = new THREE.Mesh(combGeo, combMat);
+                    comb.position.set(0, 0.65 * scale, 0.35 * scale);
+                    this.group.add(comb);
+                }
+
+                // Random scale variation
+                const s = 0.9 + Math.random() * 0.2;
+                this.group.scale.set(s, s, s);
+            }
+
+            createTag() {
+                const el = document.createElement("div");
+                el.className = "entity-tag";
+                el.textContent = "🐄 " + this.type.name;
+                document.getElementById("ui").appendChild(el);
+                this.tagEl = el;
+            }
+
+            updateTag() {
+                if (!this.tagEl || !this.alive) return;
+                const pos = new THREE.Vector3();
+                this.group.getWorldPosition(pos);
+                pos.y += 0.7;
+                pos.project(camera);
+                const x = (pos.x * 0.5 + 0.5) * innerWidth;
+                const y = (-pos.y * 0.5 + 0.5) * innerHeight;
+                if (pos.z > 1) {
+                    this.tagEl.style.display = "none";
+                    return;
+                }
+                this.tagEl.style.display = "block";
+                this.tagEl.style.left = x + "px";
+                this.tagEl.style.top = y + "px";
+                const dist = camera.position.distanceTo(this.position);
+                const scale = Math.max(0.5, Math.min(1.3, 10 / (dist + 2)));
+                this.tagEl.style.fontSize = (10 * scale) + "px";
+            }
+
+            isBlocked(x, z) {
+                const px = Math.round(x),
+                    pz = Math.round(z);
+                const gy = getGroundHeight(px, pz);
+                const bodyY = Math.round(gy + 0.3);
+                const headY = Math.round(gy + 0.6);
+                const standY = Math.round(gy - 0.1);
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dz = -1; dz <= 1; dz++) {
+                        const cx = Math.round(x + dx * 0.3),
+                            cz = Math.round(z + dz * 0.3);
+                        if (hasBlock(cx, bodyY, cz) || hasBlock(cx, headY, cz)) {
+                            if (!(cx === Math.round(x) && cz === Math.round(z) && standY === Math.round(gy - 0.1))) {
+                                return true;
+                            }
+                        }
+                        if (hasBlock(cx, Math.round(gy), cz) && !(cx === Math.round(x) && cz === Math.round(z))) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            pickTarget() {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 2 + Math.random() * ANIMAL_WANDER_RADIUS;
+                let tx = this.position.x + Math.cos(angle) * dist;
+                let tz = this.position.z + Math.sin(angle) * dist;
+                tx = Math.max(-26, Math.min(26, tx));
+                tz = Math.max(-26, Math.min(26, tz));
+                const gy = getGroundHeight(tx, tz);
+                if (gy < -2) {
+                    this.target = null;
+                    this.state = "idle";
+                    this.timer = 30;
+                    return;
+                }
+                if (this.isBlocked(tx, tz)) {
+                    this.target = null;
+                    this.state = "idle";
+                    this.timer = 20;
+                    return;
+                }
+                this.target = new THREE.Vector3(tx, gy, tz);
+                this.state = "wandering";
+            }
+
+            update() {
+                if (!this.alive) return;
+                this.timer--;
+                if (this.state === "idle") {
+                    if (this.timer <= 0) {
+                        this.pickTarget();
+                    }
+                } else if (this.state === "wandering") {
+                    if (!this.target) {
+                        this.state = "idle";
+                        this.timer = 40 + Math.random() * 80;
+                        return;
+                    }
+                    const dx = this.target.x - this.position.x;
+                    const dz = this.target.z - this.position.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+                    if (dist < 0.15) {
+                        this.state = "idle";
+                        this.timer = 60 + Math.random() * 120;
+                        this.target = null;
+                        return;
+                    }
+                    const step = Math.min(this.speed, dist);
+                    const nx = this.position.x + (dx / dist) * step;
+                    const nz = this.position.z + (dz / dist) * step;
+                    if (!this.isBlocked(nx, nz)) {
+                        const gy = getGroundHeight(nx, nz);
+                        if (gy > -2 && !this.isBlocked(nx, nz)) {
+                            this.position.x = nx;
+                            this.position.z = nz;
+                            this.position.y = gy;
+                            this.yaw = Math.atan2(dx, dz);
+                            this.walkCycle += step * 3.0;
+                            // Animate legs
+                            if (this.legs) {
+                                const swing = Math.sin(this.walkCycle) * 0.4;
+                                this.legs.forEach((leg, i) => {
+                                    const sign = (i < 2) ? 1 : -1;
+                                    leg.rotation.x = swing * sign;
+                                });
+                            }
+                        } else {
+                            this.state = "idle";
+                            this.timer = 20 + Math.random() * 30;
+                            this.target = null;
+                        }
+                    } else {
+                        this.state = "idle";
+                        this.timer = 20 + Math.random() * 40;
+                        this.target = null;
+                    }
+                }
+                this.group.position.copy(this.position);
+                this.group.rotation.y = this.yaw;
+                this.updateTag();
+            }
+
+            destroy() {
+                this.alive = false;
+                if (this.tagEl) {
+                    this.tagEl.remove();
+                    this.tagEl = null;
+                }
+                scene.remove(this.group);
+                const idx = animals.indexOf(this);
+                if (idx !== -1) animals.splice(idx, 1);
+            }
+        }
+
+        // ── Spawn animals on grass ──────────────────────────────────────────
+        function spawnAnimals(count) {
+            let placed = 0,
+                attempts = 0;
+            while (placed < count && attempts < 800) {
+                attempts++;
+                const x = (Math.random() - 0.5) * 44;
+                const z = (Math.random() - 0.5) * 44;
+                if (Math.abs(x) < 3 && Math.abs(z) < 3) continue;
+                const rx = Math.round(x),
+                    rz = Math.round(z);
+                // Check if there's a grass block at the surface
+                const h = hmap(rx, rz);
+                const key = bkey(rx, h, rz);
+                const info = blocks.get(key);
+                if (!info || info.bi !== 0) continue; // only grass
+                // Check air above
+                if (blocks.has(bkey(rx, h + 1, rz))) continue;
+                // Check not too close to spawn
+                const gy = getGroundHeight(x, z);
+                if (gy < -1 || gy > 12) continue;
+                // Check not too close to other animals or villagers
+                let tooClose = false;
+                const checkPos = new THREE.Vector3(x, 0, z);
+                for (const a of animals) {
+                    if (a.position.distanceTo(checkPos) < 2.5) { tooClose = true; break; }
+                }
+                if (tooClose) continue;
+                for (const v of villagers) {
+                    if (v.position.distanceTo(checkPos) < 3) { tooClose = true; break; }
+                }
+                if (tooClose) continue;
+                // Choose random animal type
+                const typeIdx = Math.floor(Math.random() * ANIMAL_TYPES.length);
+                const animal = new Animal(x, z, typeIdx);
+                animals.push(animal);
+                placed++;
+            }
+            console.log(`Spawned ${placed} animals`);
+        }
+
+        // ── Spawn villagers and animals ─────────────────────────────────────
+        spawnVillagers(VILLAGER_COUNT);
+        spawnAnimals(ANIMAL_COUNT);
+
+        // ── Player ───────────────────────────────────────────────────────────
+        let velY = 0,
+            onGround = false,
+            flyMode = false,
+            health = 100;
+        let yaw = 0,
+            pitch = 0,
+            started = false,
+            worldTime = 0;
+        const keys = {};
+        const _fwd = new THREE.Vector3();
+        const _rgt = new THREE.Vector3();
+        const _move = new THREE.Vector3();
+
+        document.addEventListener("keydown", e => {
+            keys[e.code] = true;
+            if (!started) return;
+            if (e.code === "Space" && !flyMode && onGround) { velY = 0.13;
+                onGround = false; }
+            if (e.key === "f" || e.key === "F") { flyMode = !flyMode;
+                velY = 0; }
+            if (e.key >= "1" && e.key <= "8") { selectedSlot = parseInt(e.key) - 1;
+                buildHotbar(); }
+        });
+        document.addEventListener("keyup", e => { keys[e.code] = false; });
+        document.addEventListener("wheel", e => {
+            if (!started) return;
+            selectedSlot = (selectedSlot + Math.sign(e.deltaY) + 8) % 8;
+            buildHotbar();
+        }, { passive: true });
+        document.addEventListener("mousemove", e => {
+            if (document.pointerLockElement !== renderer.domElement) return;
+            yaw -= e.movementX * 0.002;
+            pitch = Math.max(-1.45, Math.min(1.45, pitch - e.movementY * 0.002));
+            camera.rotation.order = "YXZ";
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+        });
+
+        // ── Click: break / place / interact ─────────────────────────────────
+        let lastBreak = 0,
+            lastPlace = 0,
+            lastInteract = 0;
+
+        renderer.domElement.addEventListener("mousedown", e => {
+            if (!started) return;
+            const now = Date.now();
+
+            if (e.button === 2) {
+                // Try villager interaction first
+                const rect = renderer.domElement.getBoundingClientRect();
+                const sx = e.clientX - rect.left;
+                const sy = e.clientY - rect.top;
+                const villager = getVillagerAtScreen(sx, sy);
+                if (villager && villager.alive && now - lastInteract > 400) {
+                    lastInteract = now;
+                    openTradeUI(villager);
+                    return;
+                }
+                // Otherwise place block
+                const hit = raycastBlocks();
+                if (hit && now - lastPlace > 250) {
+                    lastPlace = now;
+                    const px = hit.bx + hit.normal.x,
+                        py = hit.by + hit.normal.y,
+                        pz = hit.bz + hit.normal.z;
+                    const dx = Math.abs(px - Math.round(camera.position.x));
+                    const dy = Math.abs(py - Math.round(camera.position.y - 0.9));
+                    const dz = Math.abs(pz - Math.round(camera.position.z));
+                    if (dx + dy + dz > 0) addBlock(px, py, pz, inventory[selectedSlot]);
+                }
+                return;
+            }
+
+            if (e.button === 0) {
+                const hit = raycastBlocks();
+                if (hit && now - lastBreak > 200) {
+                    lastBreak = now;
+                    removeBlock(hit.bx, hit.by, hit.bz);
+                    highlight.visible = false;
+                }
+            }
+        });
+        renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+
+        // ── Sky color ────────────────────────────────────────────────────────
+        const _skyColor = new THREE.Color();
+        let frameCount = 0;
+
+        // ── Animate ──────────────────────────────────────────────────────────
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!started) return;
+            frameCount++;
+
+            // ── Player movement ──
+            const speed = keys["ShiftLeft"] ? 0.18 : 0.1;
+            _fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+            _rgt.set(Math.cos(yaw), 0, -Math.sin(yaw));
+            _move.set(0, 0, 0);
+            if (keys["KeyW"]) _move.add(_fwd);
+            if (keys["KeyS"]) _move.sub(_fwd);
+            if (keys["KeyA"]) _move.sub(_rgt);
+            if (keys["KeyD"]) _move.add(_rgt);
+            if (_move.lengthSq() > 0) _move.normalize().multiplyScalar(speed);
+
+            if (flyMode) {
+                if (keys["Space"]) camera.position.y += 0.15;
+                if (keys["ShiftLeft"]) camera.position.y -= 0.15;
+                camera.position.add(_move);
+            } else {
+                const nx = camera.position.x + _move.x;
+                const nz = camera.position.z + _move.z;
+                const fy = Math.round(camera.position.y - 1.7);
+                const cy = Math.round(camera.position.y - 0.9);
+                if (!hasBlock(nx + 0.3, fy, camera.position.z) && !hasBlock(nx - 0.3, fy, camera.position.z) &&
+                    !hasBlock(nx + 0.3, cy, camera.position.z) && !hasBlock(nx - 0.3, cy, camera.position.z))
+                    camera.position.x = nx;
+                if (!hasBlock(camera.position.x, fy, nz + 0.3) && !hasBlock(camera.position.x, fy, nz - 0.3) &&
+                    !hasBlock(camera.position.x, cy, nz + 0.3) && !hasBlock(camera.position.x, cy, nz - 0.3))
+                    camera.position.z = nz;
+
+                if (!onGround) velY -= 0.005;
+                else velY = Math.max(velY, -0.01);
+                camera.position.y += velY;
+
+                const gx = Math.round(camera.position.x),
+                    gz = Math.round(camera.position.z);
+                onGround = false;
+                const footY = camera.position.y - 1.75;
+                const floorBy = Math.floor(footY + 0.01);
+                for (let bx = gx - 1; bx <= gx + 1; bx++)
+                    for (let bz = gz - 1; bz <= gz + 1; bz++) {
+                        if (blocks.has(bkey(bx, floorBy, bz)) && Math.abs(bx - camera.position.x) < 0.75 && Math.abs(bz -
+                                camera.position.z) < 0.75) {
+                            if (velY <= 0) {
+                                camera.position.y = floorBy + 1 + 1.75;
+                                velY = 0;
+                                onGround = true;
+                            }
+                        }
+                    }
+                const headBy = Math.ceil(camera.position.y + 0.2);
+                if (blocks.has(bkey(Math.round(camera.position.x), headBy, Math.round(camera.position.z))) && velY > 0)
+                    velY = 0;
+                if (camera.position.y < -20) { camera.position.set(0, 10, 0);
+                    velY = 0;
+                    onGround = false; }
+            }
+
+            // ── Day/night ──
+            worldTime += 0.0003;
+            if (frameCount % 10 === 0) {
+                const dayT = Math.sin(worldTime);
+                _skyColor.setRGB(Math.max(0, dayT * 0.53), Math.max(0.05, dayT * 0.81 + 0.05), Math.max(0.15, dayT * 0.55 +
+                0.45));
+                scene.background = _skyColor;
+                scene.fog.color.copy(_skyColor);
+                sun.intensity = Math.max(0.05, dayT * 1.2);
+                const sa = worldTime * 0.5;
+                sun.position.set(Math.cos(sa) * 80, Math.sin(sa) * 80, 40);
+            }
+
+            // ── Block highlight ──
+            const hit = raycastBlocks();
+            if (hit) {
+                highlight.visible = true;
+                highlight.position.set(hit.bx, hit.by, hit.bz);
+            } else {
+                highlight.visible = false;
+            }
+
+            // ── Update villagers ──
+            for (const v of villagers) {
+                if (v.alive) v.update();
+            }
+
+            // ── Update animals ──
+            for (const a of animals) {
+                if (a.alive) a.update();
+            }
+
+            // ── HUD ──
+            if (frameCount % 20 === 0) {
+                const tod = ((worldTime % (Math.PI * 2)) / (Math.PI * 2));
+                const hrs = Math.floor(tod * 24),
+                    mins = Math.floor((tod * 24 % 1) * 60);
+                const phase = hrs >= 6 && hrs < 20 ? "☀️" : "🌙";
+                hudEl.innerHTML =
+                    `XYZ: ${Math.round(camera.position.x)}, ${Math.round(camera.position.y)}, ${Math.round(camera.position.z)}<br>` +
+                    `Block: ${BLOCK_TYPES[inventory[selectedSlot]].name}<br>` +
+                    `${phase} ${hrs.toString().padStart(2,"0")}:${mins.toString().padStart(2,"0")}<br>` +
+                    `${flyMode?"✈️ Fly":"🚶 Walk"} (F)  🧑‍🌾 ${villagers.filter(v=>v.alive).length} villagers  🐄 ${animals.filter(a=>a.alive).length} animals`;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // ── Start ────────────────────────────────────────────────────────────
+        startBtn.onclick = () => {
+            startEl.style.display = "none";
+            renderer.domElement.requestPointerLock();
+            started = true;
+            animate();
+        };
+        document.addEventListener("pointerlockchange", () => {
+            if (!started) return;
+            if (!document.pointerLockElement) {
+                msgEl.style.display = "block";
+                msgEl.innerHTML = "Paused<br><small style='font-size:15px;font-weight:normal'>Click to resume</small>";
+            } else { msgEl.style.display = "none"; }
+        });
+        renderer.domElement.addEventListener("click", () => {
+            if (started && document.pointerLockElement !== renderer.domElement)
+                renderer.domElement.requestPointerLock();
+        });
+        document.addEventListener("keydown", e => {
+            if (e.key === "Escape" && tradeUI.style.display === "block") {
+                closeTradeUI();
+            }
+        });
+
+        window.addEventListener("resize", () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+
+        console.log("✅ Minecraft Clone with Villagers & Animals loaded!");
+        console.log(`🌍 World: ${blocks.size} blocks, ${villagers.length} villagers, ${animals.length} animals`);
+    </script>
 </body>
 </html>
